@@ -81,7 +81,7 @@ class ReviewParser {
 			}
 			catch (NumberFormatException e){
 				//ignore
-				e.notifyAll();
+				
 			}
 			Product p = Product.build(productId, productTitle, price);
 			Reviewer c = Reviewer.build(reviewProfileName, reviewUserId);
