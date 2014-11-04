@@ -55,7 +55,7 @@ class ReviewParser {
 	 * @throws FileNotFoundException 
 	 */
 	
-	public static void parse(String filename, Set<Reviewer> c, Set<Product> p, Set<Review> r ) throws IOException{
+	public static void parse(String filename, Set<Reviewer> cs, Set<Product> ps, Set<Review> rs ) throws IOException{
 		BufferedReader f = new BufferedReader(new FileReader(new File(filename)));
 		ReviewParser rp = new ReviewParser(f);
 		while (f.ready()){
@@ -75,10 +75,14 @@ class ReviewParser {
 			catch (OutOfTextException e){
 				reviewText = e.p;
 			}
-			Product p = new Product(productId, productTitle);
-			
-			System.out.println(productId);
-			System.out.println(productTitle);
+			Product p = Product.build(productId, productTitle, Double.parseDouble(productPrice));
+			Reviewer c = Reviewer.build(reviewProfileName, reviewUserId);
+			String[] hlp = reviewHelpfulness.split("/");
+			Helpfulness h = Helpfulness.build(Integer.parseInt(hlp[0]), Integer.parseInt(hlp[1]));
+			Review r = Review.build(reviewSummary,Double.parseDouble(reviewScore), Integer.parseInt(reviewTime),c,h,p,reviewText);
+			cs.add(c);
+			ps.add(p);
+			rs.add(r);
 		}
 	}
 }
