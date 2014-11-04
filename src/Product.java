@@ -15,7 +15,7 @@ class Product{
 		this.title = title;
 	}
 	
-	private static HashMap<String, Product> lookup;
+	private static HashMap<String, Product> lookup = new HashMap<String, Product>();
 	public static Product build(String productID, String title, double price){
 		if (lookup.containsKey(productID)) return lookup.get(productID);
 		Product p = new Product(productID, title, price);

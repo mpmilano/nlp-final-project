@@ -13,7 +13,7 @@ class Reviewer {
 		userID = userid;
 	}
 	
-	private static HashMap<String, Reviewer> lookup;
+	private static HashMap<String, Reviewer> lookup = new HashMap<String, Reviewer>();
 	
 	public static Reviewer build(String profilename, String userid){
 		if (lookup.containsKey(userid)) return lookup.get(userid);
