@@ -43,9 +43,10 @@ class ReviewParser {
 			if (acc.contains(done)){
 				String[] split = acc.split(done);
 				overflow = done + (split.length > 1 ? split[1] : "");
-				return split[0].split(prefix)[1];
+				try { return split[0].split(prefix)[1]; }
+				catch (ArrayIndexOutOfBoundsException e) { return "";}
+				}
 			}
-		}
 		
 		throw new OutOfTextException(acc.split(prefix)[1]);
 	}
@@ -59,39 +60,47 @@ class ReviewParser {
 	public static void parse(String filename, Set<Reviewer> cs, Set<Product> ps, Set<Review> rs ) throws IOException{
 		BufferedReader f = new BufferedReader(new FileReader(new File(filename)));
 		ReviewParser rp = new ReviewParser(f);
-		while (f.ready()){
-			String productId = rp.reallyRead("product/productId: ","product/title: ");
-			String productTitle = rp.reallyRead("product/title: ","product/price: ");
-			String productPrice = rp.reallyRead("product/price: ", "review/userId: ");
-			String reviewUserId = rp.reallyRead("review/userId: ", "review/profileName: ");
-			String reviewProfileName = rp.reallyRead("review/profileName: ", "review/helpfulness: ");
-			String reviewHelpfulness = rp.reallyRead("review/helpfulness: ", "review/score: ");
-			String reviewScore = rp.reallyRead("review/score: ", "review/time: ");
-			String reviewTime = rp.reallyRead("review/time: ", "review/summary: ");
-			String reviewSummary = rp.reallyRead("review/summary: ", "review/text: ");
-			String reviewText = "";
-			try {
-				reviewText = rp.reallyRead("review/text: ", "product/productId: ");
+		int count = 0;
+		try {
+			while (f.ready()){
+				++count;
+				String productId = rp.reallyRead("product/productId: ","product/title: ");
+				String productTitle = rp.reallyRead("product/title: ","product/price: ");
+				String productPrice = rp.reallyRead("product/price: ", "review/userId: ");
+				String reviewUserId = rp.reallyRead("review/userId: ", "review/profileName: ");
+				String reviewProfileName = rp.reallyRead("review/profileName: ", "review/helpfulness: ");
+				String reviewHelpfulness = rp.reallyRead("review/helpfulness: ", "review/score: ");
+				String reviewScore = rp.reallyRead("review/score: ", "review/time: ");
+				String reviewTime = rp.reallyRead("review/time: ", "review/summary: ");
+				String reviewSummary = rp.reallyRead("review/summary: ", "review/text: ");
+				String reviewText = "";
+				try {
+					reviewText = rp.reallyRead("review/text: ", "product/productId: ");
+				}
+				catch (OutOfTextException e){
+					reviewText = e.p;
+				}
+				double price = -1; 
+				try {
+					price = Double.parseDouble(productPrice);
+				}
+				catch (NumberFormatException e){
+					//ignore
+
+				}
+				Product p = Product.build(productId, productTitle, price);
+				Reviewer c = Reviewer.build(reviewProfileName, reviewUserId);
+				String[] hlp = reviewHelpfulness.split("/");
+				Helpfulness h = Helpfulness.build(Integer.parseInt(hlp[0]), Integer.parseInt(hlp[1]));
+				Review r = Review.build(reviewSummary,Double.parseDouble(reviewScore), Integer.parseInt(reviewTime),c,h,p,reviewText);
+				cs.add(c);
+				ps.add(p);
+				rs.add(r);
 			}
-			catch (OutOfTextException e){
-				reviewText = e.p;
-			}
-			double price = -1; 
-			try {
-				price = Double.parseDouble(productPrice);
-			}
-			catch (NumberFormatException e){
-				//ignore
-				
-			}
-			Product p = Product.build(productId, productTitle, price);
-			Reviewer c = Reviewer.build(reviewProfileName, reviewUserId);
-			String[] hlp = reviewHelpfulness.split("/");
-			Helpfulness h = Helpfulness.build(Integer.parseInt(hlp[0]), Integer.parseInt(hlp[1]));
-			Review r = Review.build(reviewSummary,Double.parseDouble(reviewScore), Integer.parseInt(reviewTime),c,h,p,reviewText);
-			cs.add(c);
-			ps.add(p);
-			rs.add(r);
+		}
+		catch (RuntimeException e){
+			System.out.println("Got this far: " + count);
+			throw e;
 		}
 	}
 }
