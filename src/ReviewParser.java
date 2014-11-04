@@ -26,7 +26,7 @@ class ReviewParser {
 	
 	private String overflow = "";
 	private String rangeFromOverflow(String prefix, String done){
-		if (overflow.contains(prefix)){
+		if (overflow.contains(prefix) && !overflow.endsWith(prefix)){
 			String[] tmp = overflow.split(prefix)[1].split(done);
 			if (tmp.length > 1) overflow = done + tmp[1];
 			return prefix + tmp[0];
