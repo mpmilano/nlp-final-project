@@ -8,6 +8,10 @@ import java.util.Set;
 class ReviewParser {
 
 	class OutOfTextException extends IOException {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -5624253573956415820L;
 		public String p;
 		public OutOfTextException(String s){
 			super(s);
@@ -71,6 +75,8 @@ class ReviewParser {
 			catch (OutOfTextException e){
 				reviewText = e.p;
 			}
+			Product p = new Product(productId, productTitle);
+			
 			System.out.println(productId);
 			System.out.println(productTitle);
 		}
