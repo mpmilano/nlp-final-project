@@ -41,7 +41,7 @@ class ReviewParser {
 			acc += r.readLine();
 			if (acc.contains(done)){
 				String[] split = acc.split(done);
-				overflow = done + split[1];
+				overflow = done + (split.length > 1 ? split[1] : "");
 				return split[0].split(prefix)[1];
 			}
 		}
