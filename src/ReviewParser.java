@@ -75,7 +75,15 @@ class ReviewParser {
 			catch (OutOfTextException e){
 				reviewText = e.p;
 			}
-			Product p = Product.build(productId, productTitle, Double.parseDouble(productPrice));
+			double price = -1; 
+			try {
+				price = Double.parseDouble(productPrice);
+			}
+			catch (NumberFormatException e){
+				//ignore
+				e.notifyAll();
+			}
+			Product p = Product.build(productId, productTitle, price);
 			Reviewer c = Reviewer.build(reviewProfileName, reviewUserId);
 			String[] hlp = reviewHelpfulness.split("/");
 			Helpfulness h = Helpfulness.build(Integer.parseInt(hlp[0]), Integer.parseInt(hlp[1]));
