@@ -1,13 +1,17 @@
 import java.util.HashMap;
+import java.io.Serializable;
 
-public class Helpfulness {
+public class Helpfulness implements Serializable{
+
+	public static final long serialVersionUID = 25461l;
+
 	public final int votes;
 	public final int total;
 	private Helpfulness(int votes, int total){
 		this.votes = votes; this.total = total;
 	}
 	
-	private static HashMap< Long,  Helpfulness> lookup = new HashMap<Long, Helpfulness>();
+	private transient static HashMap< Long,  Helpfulness> lookup = new HashMap<Long, Helpfulness>();
 	public static Helpfulness build(int votes, int total){
 		if (lookup == null) lookup = new HashMap<Long, Helpfulness>(); 
 		long p = (((long) votes) << 32) + total;

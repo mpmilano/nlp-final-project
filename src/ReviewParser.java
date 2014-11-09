@@ -65,10 +65,15 @@ class ReviewParser {
 			while (f.ready()){
 				++count;
 				String productId = rp.reallyRead("product/productId: ","product/title: ");
+				productId.intern();
 				String productTitle = rp.reallyRead("product/title: ","product/price: ");
+				productTitle.intern();
 				String productPrice = rp.reallyRead("product/price: ", "review/userId: ");
+				productPrice.intern();
 				String reviewUserId = rp.reallyRead("review/userId: ", "review/profileName: ");
+				reviewUserId.intern();
 				String reviewProfileName = rp.reallyRead("review/profileName: ", "review/helpfulness: ");
+				reviewProfileName.intern();
 				String reviewHelpfulness = rp.reallyRead("review/helpfulness: ", "review/score: ");
 				String reviewScore = rp.reallyRead("review/score: ", "review/time: ");
 				String reviewTime = rp.reallyRead("review/time: ", "review/summary: ");
