@@ -27,10 +27,10 @@ inline std::string pre_substr(const std::string &s, const std::string &e){
 inline std::string strReplace (const std::string &s, char o, char n){
 	std::string ret = s;
 	std::string::size_type pos = 0;
-	while (pos <= ret.length()){
-	    pos = ret.find_first_of(o);
-	    ret[pos] = n;
-	    ++pos;
+	while (pos != std::string::npos){
+		pos = ret.find_first_of(o,pos == 0? pos : pos + 1);
+		ret[pos] = n;
+		
 	}
 	return ret;
 }

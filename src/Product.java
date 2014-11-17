@@ -16,18 +16,18 @@ class Product implements Mementoable<Product>, Comparable<Product>{
 	private static HashMap<String, Product> lookup = new HashMap<String, Product>();
 
 
-	public Memento pack() {
-		return new Memento(this);
+	public PMemento pack() {
+		return new MPemento(this);
 	}
 
-	public static class Memento implements Mementoable.Memento<Product> {
+	public static class PMemento implements Memento<Product> {
 		public static final long serialVersionUID = 7022l;
 		
 		private final String productID;
 		private final String title;
 		private final double price;
 
-		public Memento(Product p){
+		public PMemento(Product p){
 			productID = p.productID;
 			title = p.title; 
 			price = p.price;
@@ -52,6 +52,12 @@ class Product implements Mementoable<Product>, Comparable<Product>{
 		lookup.put(productID, p);
 		return p;
 	}
+
+	public static Product build(String productID){
+		return lookup.get(productID);
+	}
+
+
 	@Override
 	public int compareTo(Product o) {
 		// TODO Auto-generated method stub

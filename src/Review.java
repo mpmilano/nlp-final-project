@@ -10,7 +10,7 @@ class Review implements Mementoable<Review>, Comparable<Review> {
 	public final Product product;
 	public final String text;
 
-	public static class RMemento implements Mementoable.Memento<Review> {
+	public static class RMemento implements Memento<Review> {
 		public final String summary;
 		public final double score;
 		public final int time;

@@ -5,6 +5,8 @@
 #include <set>
 #include <unordered_map>
 #include "Memoize.hpp"
+#include <boost/serialization/export.hpp>
+#include <boost/serialization/access.hpp>
 
 class Review;
 
@@ -23,12 +25,14 @@ private:
 	  }
 
 	static int& idr() {static int idr = 0; return idr;}
-	
-	  class Memo : public ::Memo<std::shared_ptr<Reviewer> > {
+public:	
+class Memo : public ::Memo<std::shared_ptr<Reviewer> > {
+
 	    	std::string profileName;
 		std::string userID;
 		
 		friend class Reviewer;
+		friend class boost::serialization::access;
 		Memo(std::string pn,std::string u):profileName(pn),userID(u){}
 		
 		  template<class Archive>
@@ -36,14 +40,16 @@ private:
 		  ar & profileName;
 		  ar & userID;
 		}
-		
+public:
 		std::shared_ptr<Reviewer> unpack() const {
 		    return build(profileName,userID);
 		}
+			Memo(){}
+
 
 	};
 			
-	
+private:
 	Reviewer(std::string profileName, std::string userID):profileName(profileName),userID(userID),id(idr()++){}
 
 public:
@@ -51,6 +57,7 @@ public:
   	Memo_p pack() const {
 	  return Memo_p(new Memo(profileName,userID));
 	}
+	Memo pod_pack() const { return Memo(profileName,userID);}
 	
 	static std::shared_ptr<Reviewer> build(const std::string &profilename, const std::string &userid){
 		if (lookup().find(userid) != lookup().end()) return lookup().at(userid);
@@ -67,3 +74,4 @@ public:
 };
 
 typedef std::shared_ptr<Reviewer> Reviewer_p;
+BOOST_CLASS_EXPORT_GUID(Reviewer::Memo, "reviewermemo")

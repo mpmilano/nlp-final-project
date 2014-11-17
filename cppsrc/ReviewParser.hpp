@@ -83,7 +83,7 @@ private:
 	 * @throws FileNotFoundException 
 	 */
 
-	static void readFromFile(const std::string &filename, std::set<Reviewer_p > &,
+	static bool readFromFile(const std::string &filename, std::set<Reviewer_p > &,
 					 std::set<Product_p > &, 
 					 std::set<Review_p > &rs) {
 	  
@@ -92,18 +92,20 @@ private:
 		std::string rprr = cachefileprefix + "rp-rr.obj";
 		std::string rpp = cachefileprefix + "rp-p.obj";
 		std::string rpr = cachefileprefix + "rp-r.obj";
-		std::ifstream ifs(filename);
+		std::ifstream ifs(rpr);
+		if (! ifs.good()) return false;
+		std::cout << "file good - proceeding!" << std::endl;
 		boost::archive::binary_iarchive ia(ifs);
 		std::set<Review_p>::size_type size;
 		ia >> size;
 		
 		for (std::set<Review_p>::size_type i = 0; i < size; ++i){
-		    Memo<Review_p> *r;
+			Review::Memo r;
 		    ia >> r;
-		    rs.insert(std::unique_ptr<Review>(r->unpack()));
+		    rs.insert(std::unique_ptr<Review>(r.unpack()));
 		}
 //*/
-		return;
+		return true;
 	}
 	
 	static void writeToFile(const std::string& filename, const std::set<Review_p> &rs){
@@ -111,24 +113,24 @@ private:
 		std::string rprr = cachefileprefix + "rp-rr.obj";
 		std::string rpp = cachefileprefix + "rp-p.obj";
 		std::string rpr = cachefileprefix + "rp-r.obj";
-		std::ofstream ofs(filename);
+		std::ofstream ofs(rpr);
 		boost::archive::binary_oarchive oa(ofs);
 		{
 		  auto tmp = rs.size();
 		  oa << tmp;
 		}
-		for (const auto &r : rs) { auto t1 = r->pack(); auto t2 = t1.get(); oa << t2;}
+		for (const auto &r : rs) { auto t1 = r->pod_pack(); oa << t1;}
 		return;
 	}
 	
 	public: 
 	    static void parse(const std::string &filename, std::set<Reviewer_p> &cs, std::set<Product_p> &ps, std::set<Review_p> &rs ) {
 		
+		    std::cout << "starting parse" << std::endl;
+
+		    if (readFromFile(filename,cs,ps,rs)) return;
+
 		Input f(filename);
-		if (f.good()) {
-		  readFromFile(filename,cs,ps,rs);
-		  return;
-		}
 		ReviewParser rp(f);
 		int count = 0;
 		

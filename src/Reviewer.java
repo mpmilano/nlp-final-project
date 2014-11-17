@@ -16,14 +16,14 @@ class Reviewer implements Mementoable<Reviewer>, Comparable<Reviewer>{
 	private static int idr = 0;
 	private static HashMap<String, Reviewer> lookup = new HashMap<String, Reviewer>();
 
-	public Memento pack(){
-		return new Memento(this);
+	public RMemento pack(){
+		return new RMemento(this);
 	}
 	
-	public static class Memento implements Mementoable.Memento<Reviewer> {
+	public static class RMemento implements Memento<Reviewer> {
 		private final String profileName;
 		private final String userID;
-		public Memento(Reviewer r){
+		public RMemento(Reviewer r){
 			profileName = r.profileName;
 			userID = r.userID;
 

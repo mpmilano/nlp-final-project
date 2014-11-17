@@ -28,8 +28,7 @@ class Related {
 	public final static String otherpickle = "B0010VS078";
 	public final static String bigships = "0870334336";
 
-	public final static List<String> all = new LinkedList<String>() {{
-			
+	public final static List<String> all = Collections.unmodifiableList(new LinkedList<String>() {{			
 			add(uranium_ore);
 			add(unicorn_meat);
 			add(horse_head);
@@ -54,21 +53,7 @@ class Related {
 			add(squirrelpants);
 			add(otherpickle);
 			add(bigships);
-
-		}};
-	
-	static class SetMap<T, V> extends HashMap<T, Set<V> > {
-		public static final long serialVersionUID = 42L;
-		void putk(T t, V v){
-			if (containsKey(t))
-				get(t).add(v);
-			else {
-				HashSet<V> vs = new HashSet<V>();
-				vs.add(v);
-				put(t, vs);
-			}
-		}
-	}
+			}});
 
 	public static SetMap<String,String> buildFile(String plaintext, String classfile) throws IOException {
 		SetMap<String,String> related = new SetMap<String,String>();

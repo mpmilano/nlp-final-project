@@ -4,7 +4,7 @@
 #include "Helpfulness.hpp"
 #include "Reviewer.hpp"
 #include "Product.hpp"
-#include <boost/serialization/split_member.hpp>
+#include <boost/serialization/export.hpp>
 
 class Review;
 typedef std::unique_ptr<Review> Review_p;
@@ -21,56 +21,44 @@ public:
 	const Product_p product;
 	const std::string text;
 
-private:
   
 	class Memo : public ::Memo<Review_p> {
-	friend class boost::serialization::access;
+		friend class boost::serialization::access;	
+		std::string summary;
+		double score;
+		int time;
+		Reviewer::Memo reviewer;
+		Helpfulness help;
+		Product::Memo product;
+		std::string text;
 	
-	std::string summary;
-	double score;
-	int time;
-	::Memo<Reviewer_p>::t reviewer;
-	Helpfulness help;
-	::Memo<Product_p>::t product;
-	std::string text;
-	
-	template<class Archive>
-	void save(Archive &ar, const unsigned int /*version*/) const {
-		ar & summary;
-		ar & score;
-		ar & time;
-		ar & reviewer;
-		ar & help;
-		ar & product;
-		ar & text;
-	}
-	
-	template<class Archive>
-	void load(Archive &ar, const unsigned int /*version*/) {
-		ar & summary;
-		ar & score;
-		ar & time;
-		ar & reviewer;
-		ar & help;
-		ar & product;
-		ar & text;
-	}
-	
-	Review_p unpack() const{
-	 	auto rr = reviewer->unpack();
-		auto pr = product->unpack();
-		return build(summary,score,time,rr,help,pr,text); 
-	}
-	BOOST_SERIALIZATION_SPLIT_MEMBER()
-	
+		template<class Archive>
+		void serialize(Archive &ar, const unsigned int /*version*/)  {
+			ar & summary;
+			ar & score;
+			ar & time;
+			ar & reviewer;
+			ar & help;
+			ar & product;
+			ar & text;
+		}
+		
 	public: 
-	  Memo(std::string s, double sc, int t, ::Memo<Reviewer_p>::t r, Helpfulness h, ::Memo<Product_p>::t p, std::string tx)
-	  :summary(s),score(sc),time(t),reviewer(std::move(r)),help(h),product(std::move(p)),text(tx){}
+		Review_p unpack() const{
+			auto rr = reviewer.unpack();
+			auto pr = product.unpack();
+			return build(summary,score,time,rr,help,pr,text); 
+		}
+		
 
-	};
-	
-public:
-	Memo_p pack() const {return Memo_p(new Memo(summary,score,time,reviewer->pack(),help,product->pack(),text)); }
+		Memo(std::string s, double sc, int t, Reviewer::Memo r, Helpfulness h, Product::Memo p, std::string tx)
+			:summary(s),score(sc),time(t),reviewer(std::move(r)),help(h),product(std::move(p)),text(tx){}
+		Memo(){}
+		
+	};	
+
+	Memo_p pack() const {return Memo_p(new Memo(summary,score,time,reviewer->pod_pack(),help,product->pod_pack(),text));}
+	Memo pod_pack() const {return Memo(summary,score,time,reviewer->pod_pack(),help,product->pod_pack(),text);}
 
 private: 
 	Review(const std::string summary, 
@@ -110,3 +98,4 @@ public:
 	
 };
 
+BOOST_CLASS_EXPORT_GUID(Review::Memo, "reviewmemo")

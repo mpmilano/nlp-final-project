@@ -7,6 +7,8 @@
 #include <unordered_map>
 #include <cassert>
 #include "Memoize.hpp"
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/export.hpp>
 
 class Review;
 
@@ -30,22 +32,6 @@ private:
 
 	static int& idr() {static int idr = 0; return idr;}
 	
-	class Memo : public ::Memo<Product_p> {
-	std::string productID;
-	std::string title;
-	double price;
-	friend class Product;
-	Memo(std::string p, std::string t, double pr):productID(p),title(t),price(pr){}
-	
-	Product_p unpack() const { return build(productID, title, price); }
-	
-	template<class Archive>
-	void serialize(Archive &ar, const unsigned int /*version*/) {
-		ar & productID;
-		ar & title;
-		ar & price;
-	}
-	};
 
 	Product(const std::string &productID, const std::string &title, const double &price)
 		:productID(productID),title(title),price(price),id(idr()++){
@@ -53,8 +39,30 @@ private:
 	}
 
 public: 
-  
+
+
+	class Memo : public ::Memo<Product_p> {
+public:
+	std::string productID;
+	std::string title;
+	double price;
+	friend class Product;
+	Memo(std::string p, std::string t, double pr):productID(p),title(t),price(pr){}
+		Memo(){}
+	
+	Product_p unpack() const { return build(productID, title, price); }
+	
+	template<class Archive>
+	void serialize(Archive &ar, const unsigned int /*version*/) {
+		ar & boost::serialization::base_object<::Memo<Product_p> > (*this);
+		ar & productID;
+		ar & title;
+		ar & price;
+	}
+	};
+
   	Memo_p pack() const { return Memo_p(new Memo(productID,title,price));}
+Memo pod_pack() const { return Memo(productID,title,price);}
   
 	static std::shared_ptr<Product> build(const std::string &productID, const std::string &title, double price){
 		if (lookup().find(productID) != lookup().end()) return lookup().at(productID);
@@ -73,3 +81,5 @@ public:
 	}
 };
 typedef std::shared_ptr<Product> Product_p;
+
+BOOST_CLASS_EXPORT_GUID(Product::Memo, "productmemo")
