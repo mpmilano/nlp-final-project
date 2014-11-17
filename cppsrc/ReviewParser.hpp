@@ -147,6 +147,8 @@ private:
 		}
 		catch (Exception ignoreme){
 */
+
+		std::cout << "beginning parse" << std::endl;
 				while (f.good()){
 					++count;
 					std::string productId = rp.reallyRead("product/productId: ","product/title: ");
@@ -180,6 +182,7 @@ private:
 					rs.insert(std::move(r));
 				}
 				
+				std::cout << "completed parse" << std::endl;
 				writeToFile(filename,rs);
 				/*
 				new ObjectOutputStream(new FileOutputStream(new File(rprr))).writeObject(cs);
