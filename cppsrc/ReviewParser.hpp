@@ -83,8 +83,8 @@ private:
 	 * @throws FileNotFoundException 
 	 */
 
-	static bool readFromFile(const std::string &filename, std::set<Reviewer_p > &,
-					 std::set<Product_p > &, 
+	static bool readFromFile(const std::string &filename, std::set<Reviewer_p > &rrs,
+					 std::set<Product_p > &ps, 
 					 std::set<Review_p > &rs) {
 	  
 	  
@@ -96,19 +96,37 @@ private:
 		if (! ifs.good()) return false;
 		std::cout << "file good - proceeding!" << std::endl;
 		boost::archive::binary_iarchive ia(ifs);
-		std::set<Review_p>::size_type size;
-		ia >> size;
+		std::set<Reviewer_p>::size_type rrsize;
+		ia >> rrsize;
+		std::set<Product_p>::size_type psize;
+		ia >> psize;
+		std::set<Review_p>::size_type rsize;
+		ia >> rsize;
 		
-		for (std::set<Review_p>::size_type i = 0; i < size; ++i){
+		for (std::set<Reviewer_p>::size_type i = 0; i < rrsize; ++i){
+			Reviewer::Memo r;
+			ia >> r;
+			rrs.insert(Reviewer_p(r.unpack()));
+		}
+
+		for (std::set<Product_p>::size_type i = 0; i < psize; ++i){
+			Product::Memo r;
+			ia >> r;
+			ps.insert(Product_p(r.unpack()));
+		}
+
+		for (std::set<Review_p>::size_type i = 0; i < rsize; ++i){
 			Review::Memo r;
 		    ia >> r;
-		    rs.insert(std::unique_ptr<Review>(r.unpack()));
+		    rs.insert(Review_p(r.unpack()));
 		}
 //*/
 		return true;
 	}
 	
-	static void writeToFile(const std::string& filename, const std::set<Review_p> &rs){
+	static void writeToFile(const std::string& filename, std::set<Reviewer_p > &rrs,
+					 std::set<Product_p > &ps, 
+					 std::set<Review_p > &rs){
 	  	std::string cachefileprefix = "/tmp/" + strReplace(filename,'/','%');
 		std::string rprr = cachefileprefix + "rp-rr.obj";
 		std::string rpp = cachefileprefix + "rp-p.obj";
@@ -116,10 +134,21 @@ private:
 		std::ofstream ofs(rpr);
 		boost::archive::binary_oarchive oa(ofs);
 		{
+		  auto tmp = rrs.size();
+		  oa << tmp;
+		}
+		for (const auto &r : rrs) { auto t1 = r->pod_pack(); oa << t1;}
+		{
+		  auto tmp = ps.size();
+		  oa << tmp;
+		}
+		for (const auto &r : ps) { auto t1 = r->pod_pack(); oa << t1;}
+		{
 		  auto tmp = rs.size();
 		  oa << tmp;
 		}
 		for (const auto &r : rs) { auto t1 = r->pod_pack(); oa << t1;}
+
 		return;
 	}
 	
@@ -185,7 +214,7 @@ private:
 				}
 				
 				std::cout << "completed parse" << std::endl;
-				writeToFile(filename,rs);
+				writeToFile(filename,cs, ps, rs);
 				/*
 				new ObjectOutputStream(new FileOutputStream(new File(rprr))).writeObject(cs);
 				new ObjectOutputStream(new FileOutputStream(new File(rpr))).writeObject(rs);
