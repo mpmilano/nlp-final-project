@@ -9,6 +9,7 @@
 #include "Reviewer.hpp"
 #include "Review.hpp"
 #include "Helpfulness.hpp"
+#include <boost/archive/binary_iarchive.hpp>
 
 template<class Input>
 class ReviewParser {
@@ -78,20 +79,21 @@ private:
 	 * @throws FileNotFoundException 
 	 */
 
-	template<class Archive>
-	static void readFromFile(Archive &a; const std::string fname&, std::set<std::shared_ptr<Reviewer> > &, 
+	static void readFromFile(const std::string fname&, std::set<std::shared_ptr<Reviewer> > &, 
 					 std::set<std::shared_ptr<Product> > &, 
 					 std::set<std::shared_ptr<Review> > r&) {
+	  
 	  
 		std::string cachefileprefix = "/tmp/" + strReplace(filename,'/','%');
 		std::string rprr = cachefileprefix + "rp-rr.obj";
 		std::string rpp = cachefileprefix + "rp-p.obj";
 		std::string rpr = cachefileprefix + "rp-r.obj";
-	
+		std::ifstream ifs(filename);
+		boost::archive::text_iarchive ia(ifs);
 		int size;
-		a >> size;
+		ia >> size;
 		for (int i = 0; i < size; ++i){
-			
+			ia.
 		}
 
 		
