@@ -1,14 +1,21 @@
 #pragma once
 #include <vector>
 #include <sstream>
+#include <string>
 #include "StringUtils.hpp"
+#include <iostream>
+#include <cassert>
+#include "Product.hpp"
+#include "Reviewer.hpp"
+#include "Review.hpp"
+#include "Helpfulness.hpp"
 
 template<class Input>
 class ReviewParser {
 
 private: 
-	Input r;
-	ReviewParser(Input f):r(f){}
+	Input &r;
+	ReviewParser(Input &f):r(f){}
 
 	template<typename T>
 	class call_cont {
@@ -25,7 +32,7 @@ private:
 			static std::vector<std::string> v1;
 			v1.clear();
 			std::string tmp = overflow.substr(overflow.find(prefix) + prefix.length());
-			if ((auto pos = tmp.find(done)) != std::string::npos){
+			if (auto pos = tmp.find(done) != std::string::npos){
 				overflow = tmp.substr(pos);
 				return prefix + tmp.substr(0,pos);
 			}
@@ -38,9 +45,9 @@ private:
 		std::string acc = rangeFromOverflow(prefix, done);
 		std::stringstream racc;
 		if (strContains(overflow,done)) return post_substr(acc,prefix);
-		while (r.ready()){
+		while (r.good()){
 			std::getline(r,acc);
-			if ((int split = acc.find(done)) != string::npos){
+			if (int split = acc.find(done) != std::string::npos){
 				overflow = acc.substr(split);
 				racc << acc.substr(0,split);
 				std::string ret_w_prefix = racc.str();
@@ -58,22 +65,24 @@ private:
 	 * @throws FileNotFoundException 
 	 */
 
-	private static void readFromFile(const std::string &filename, std::set<std::shared_ptr<Reviewer> > &cs, 
-					 std::set<std::shared_ptr<Product> > &ps, 
-					 std::set<std::shared_ptr<Review> > &rs) throws IOException{
-		std::string cachefileprefix = "/tmp/" + filename.replace('/','%');
+	static void readFromFile(const std::string &, std::set<std::shared_ptr<Reviewer> > &, 
+					 std::set<std::shared_ptr<Product> > &, 
+					 std::set<std::shared_ptr<Review> > &) {
+	  /*
+		std::string cachefileprefix = "/tmp/" + strReplace(filename,'/','%');
 		std::string rprr = cachefileprefix + "rp-rr.obj";
 		std::string rpp = cachefileprefix + "rp-p.obj";
 		std::string rpr = cachefileprefix + "rp-r.obj";
-
+	*/
 		assert(false && "still porting");
 
 		return;
 	}
 	
-	public static void parse(const std::string &filename, std::set<Reviewer_p> &cs, std::set<Product_p> &ps, std::set<Review_p> &rs ) throws IOException{
+	public: 
+	    static void parse(const std::string &filename, std::set<Reviewer_p> &cs, std::set<Product_p> &ps, std::set<Review_p> &rs ) {
 		Input f(filename);
-		ReviewParser rp = new ReviewParser(f);
+		ReviewParser rp(f);
 		int count = 0;
 
 /*
@@ -91,7 +100,7 @@ private:
 		catch (Exception ignoreme){
 */
 			try {
-				while (f.ready()){
+				while (f.good()){
 					++count;
 					std::string productId = rp.reallyRead("product/productId: ","product/title: ");
 					std::string productTitle = rp.reallyRead("product/title: ","product/price: ");
@@ -110,14 +119,14 @@ private:
 						reviewText = e.t;
 					}
 					double price = std::stod(productPrice);
-					Product p = Product.build(productId, productTitle, price);
-					Reviewer c = Reviewer.build(reviewProfileName, reviewUserId);
-					Helpfulness h = Helpfulness.build(std::stoi(pre_substr(reviewHelpfulness,"/")), 
+					Product_p p = Product::build(productId, productTitle, price);
+					Reviewer_p c = Reviewer::build(reviewProfileName, reviewUserId);
+					Helpfulness h = Helpfulness::build(std::stoi(pre_substr(reviewHelpfulness,"/")), 
 									  std::stoi(post_substr(reviewHelpfulness,"/")));
-					Review r = Review.build(reviewSummary,std::stod(reviewScore), std::stoi(reviewTime),c,h,p,reviewText);
-					cs.add(c);
-					ps.add(p);
-					rs.add(r);
+					Review_p r = Review::build(reviewSummary,std::stod(reviewScore), std::stoi(reviewTime),c,h,p,reviewText);
+					cs.insert(c);
+					ps.insert(p);
+					rs.insert(r);
 				}
 				/*
 				new ObjectOutputStream(new FileOutputStream(new File(rprr))).writeObject(cs);
@@ -125,9 +134,9 @@ private:
 				new ObjectOutputStream(new FileOutputStream(new File(rpp))).writeObject(ps);
 				*/
 			}
-			catch (... e){
+			catch (...){
 				std::cout << "Got this far: " << count << std::endl;
-				throw e;
+				throw 0;
 			}
 			/*}//*/
 	}
