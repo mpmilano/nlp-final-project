@@ -87,7 +87,7 @@ private:
 					 std::set<Product_p > &, 
 					 std::set<Review_p > &rs) {
 	  
-/*	  
+	  
 		std::string cachefileprefix = "/tmp/" + strReplace(filename,'/','%');
 		std::string rprr = cachefileprefix + "rp-rr.obj";
 		std::string rpp = cachefileprefix + "rp-p.obj";
@@ -98,9 +98,9 @@ private:
 		ia >> size;
 		
 		for (std::set<Review_p>::size_type i = 0; i < size; ++i){
-		    Review* r;
+		    Memo<Review_p> *r;
 		    ia >> r;
-		    rs.insert(std::unique_ptr<Review>(r));
+		    rs.insert(std::unique_ptr<Review>(r->unpack()));
 		}
 //*/
 		return;

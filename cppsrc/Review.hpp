@@ -12,15 +12,13 @@ typedef std::unique_ptr<Review> Review_p;
 class Review : public Memoizeable<Review_p> {
 
 private:
-	Reviewer_p _reviewer;  
-	Product_p _product;
 public:
 	const std::string summary;
 	const double score;
 	const int time;
-	const Reviewer_p& reviewer(){return _reviewer;}
+	const Reviewer_p reviewer;
 	const Helpfulness help;
-	const Product_p& product(){return _product;}
+	const Product_p product;
 	const std::string text;
 
 private:
@@ -72,7 +70,7 @@ private:
 	};
 	
 public:
-	Memo_p pack() const {return Memo_p(new Memo(summary,score,time,_reviewer->pack(),help,_product->pack(),text)); }
+	Memo_p pack() const {return Memo_p(new Memo(summary,score,time,reviewer->pack(),help,product->pack(),text)); }
 
 private: 
 	Review(const std::string summary, 
@@ -85,9 +83,9 @@ private:
 		summary(summary),
 		score(score),
 		time(time),
-		_reviewer(reviewer),
+		reviewer(reviewer),
 		help(help),
-		_product(product),
+		product(product),
 		text(text){}
 	
 public: 
@@ -104,8 +102,8 @@ public:
 		return ret;
 	}
 	
-	~Review(){ Product_p p = _product;
-		   Reviewer_p r = _reviewer;
+	~Review(){ Product_p p = product;
+		   Reviewer_p r = reviewer;
 		   p->reviews.erase(this);
 		   r->reviews.erase(this);
 	}
