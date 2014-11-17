@@ -32,7 +32,8 @@ private:
 			static std::vector<std::string> v1;
 			v1.clear();
 			std::string tmp = overflow.substr(overflow.find(prefix) + prefix.length());
-			if (auto pos = tmp.find(done) != std::string::npos){
+			auto pos = tmp.find(done);
+			if (pos != std::string::npos){
 				overflow = tmp.substr(pos);
 				return prefix + tmp.substr(0,pos);
 			}
@@ -42,12 +43,24 @@ private:
 	}
 
 	std::string reallyRead(const std::string &prefix, const std::string &done) {
+		//{ std::cout << "starting at: " << prefix << " stopping at: " << done << std::endl; }
 		std::string acc = rangeFromOverflow(prefix, done);
+		//{ std::cout << "overflow had: " << acc << std::endl; }
 		std::stringstream racc;
+		racc << acc;
 		if (strContains(overflow,done)) return post_substr(acc,prefix);
 		while (r.good()){
 			std::getline(r,acc);
-			if (int split = acc.find(done) != std::string::npos){
+			std::string::size_type split = acc.find(done);
+			if (split != std::string::npos){
+				/*{
+					assert(acc.find(done) == split);
+					assert(done[0] == acc[split]);
+					std::cout << "diagnostics" << std::endl;
+					std::cout << acc << std::endl;
+					std::cout << done << " at " << split << std::endl;
+					std::cout << "racc has " << racc.str() << std::endl;
+				}//*/
 				overflow = acc.substr(split);
 				racc << acc.substr(0,split);
 				std::string ret_w_prefix = racc.str();
@@ -65,16 +78,23 @@ private:
 	 * @throws FileNotFoundException 
 	 */
 
-	static void readFromFile(const std::string &, std::set<std::shared_ptr<Reviewer> > &, 
+	template<class Archive>
+	static void readFromFile(Archive &a; const std::string fname&, std::set<std::shared_ptr<Reviewer> > &, 
 					 std::set<std::shared_ptr<Product> > &, 
-					 std::set<std::shared_ptr<Review> > &) {
-	  /*
+					 std::set<std::shared_ptr<Review> > r&) {
+	  
 		std::string cachefileprefix = "/tmp/" + strReplace(filename,'/','%');
 		std::string rprr = cachefileprefix + "rp-rr.obj";
 		std::string rpp = cachefileprefix + "rp-p.obj";
 		std::string rpr = cachefileprefix + "rp-r.obj";
-	*/
-		assert(false && "still porting");
+	
+		int size;
+		a >> size;
+		for (int i = 0; i < size; ++i){
+			
+		}
+
+		
 
 		return;
 	}
@@ -99,11 +119,12 @@ private:
 		}
 		catch (Exception ignoreme){
 */
-			try {
 				while (f.good()){
 					++count;
 					std::string productId = rp.reallyRead("product/productId: ","product/title: ");
+					// { std::cout << "(yay) productID: " << productId << std::endl; }
 					std::string productTitle = rp.reallyRead("product/title: ","product/price: ");
+					//{ std::cout << "(yay) productTitle: " << productTitle << std::endl; }
 					std::string productPrice = rp.reallyRead("product/price: ", "review/userId: ");
 					std::string reviewUserId = rp.reallyRead("review/userId: ", "review/profileName: ");
 					std::string reviewProfileName = rp.reallyRead("review/profileName: ", "review/helpfulness: ");
@@ -118,7 +139,9 @@ private:
 					catch (call_cont<std::string> e){
 						reviewText = e.t;
 					}
-					double price = std::stod(productPrice);
+					double price = -1;
+					try {price = std::stod(productPrice);}
+					catch (...) {}
 					Product_p p = Product::build(productId, productTitle, price);
 					Reviewer_p c = Reviewer::build(reviewProfileName, reviewUserId);
 					Helpfulness h = Helpfulness::build(std::stoi(pre_substr(reviewHelpfulness,"/")), 
@@ -133,11 +156,7 @@ private:
 				new ObjectOutputStream(new FileOutputStream(new File(rpr))).writeObject(rs);
 				new ObjectOutputStream(new FileOutputStream(new File(rpp))).writeObject(ps);
 				*/
-			}
-			catch (...){
-				std::cout << "Got this far: " << count << std::endl;
-				throw 0;
-			}
+			
 			/*}//*/
 	}
 };

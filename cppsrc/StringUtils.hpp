@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <iostream>
 
 inline bool strEndsWith(const std::string &s, const std::string &end){
 	return s.find(end) + end.length() == s.length();
@@ -11,6 +12,11 @@ inline bool strContains(const std::string &s, const std::string &end){
 }
 
 inline std::string post_substr(const std::string &s, const std::string &e){
+	if (s.find(e) + e.length() > s.length()){
+		std::cerr << s << std::endl;
+		std::cerr << e << std::endl;
+		assert(false && "post_substr called when there was nothing post-substr...");
+	}
 	return s.substr(s.find(e) + e.length());
 }
 
