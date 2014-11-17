@@ -4,12 +4,16 @@
 #include <string>
 #include "StringUtils.hpp"
 #include <iostream>
+#include <fstream>
+#include <memory>
 #include <cassert>
 #include "Product.hpp"
 #include "Reviewer.hpp"
 #include "Review.hpp"
 #include "Helpfulness.hpp"
 #include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+
 
 template<class Input>
 class ReviewParser {
@@ -79,33 +83,55 @@ private:
 	 * @throws FileNotFoundException 
 	 */
 
-	static void readFromFile(const std::string fname&, std::set<std::shared_ptr<Reviewer> > &, 
-					 std::set<std::shared_ptr<Product> > &, 
-					 std::set<std::shared_ptr<Review> > r&) {
+	static void readFromFile(const std::string &filename, std::set<Reviewer_p > &,
+					 std::set<Product_p > &, 
+					 std::set<Review_p > &rs) {
 	  
-	  
+/*	  
 		std::string cachefileprefix = "/tmp/" + strReplace(filename,'/','%');
 		std::string rprr = cachefileprefix + "rp-rr.obj";
 		std::string rpp = cachefileprefix + "rp-p.obj";
 		std::string rpr = cachefileprefix + "rp-r.obj";
 		std::ifstream ifs(filename);
-		boost::archive::text_iarchive ia(ifs);
-		int size;
+		boost::archive::binary_iarchive ia(ifs);
+		std::set<Review_p>::size_type size;
 		ia >> size;
-		for (int i = 0; i < size; ++i){
-			ia.
-		}
-
 		
-
+		for (std::set<Review_p>::size_type i = 0; i < size; ++i){
+		    Review* r;
+		    ia >> r;
+		    rs.insert(std::unique_ptr<Review>(r));
+		}
+//*/
+		return;
+	}
+	
+	static void writeToFile(const std::string& filename, const std::set<Review_p> &rs){
+	  	std::string cachefileprefix = "/tmp/" + strReplace(filename,'/','%');
+		std::string rprr = cachefileprefix + "rp-rr.obj";
+		std::string rpp = cachefileprefix + "rp-p.obj";
+		std::string rpr = cachefileprefix + "rp-r.obj";
+		std::ofstream ofs(filename);
+		boost::archive::binary_oarchive oa(ofs);
+		{
+		  auto tmp = rs.size();
+		  oa << tmp;
+		}
+		for (const auto &r : rs) { auto t1 = r->pack(); auto t2 = t1.get(); oa << t2;}
 		return;
 	}
 	
 	public: 
 	    static void parse(const std::string &filename, std::set<Reviewer_p> &cs, std::set<Product_p> &ps, std::set<Review_p> &rs ) {
+		
 		Input f(filename);
+		if (f.good()) {
+		  readFromFile(filename,cs,ps,rs);
+		  return;
+		}
 		ReviewParser rp(f);
 		int count = 0;
+		
 
 /*
 		std::string cachefileprefix = "/tmp/" + filename.replace('/','%');
@@ -138,7 +164,7 @@ private:
 					try {
 						reviewText = rp.reallyRead("review/text: ", "product/productId: ");
 					}
-					catch (call_cont<std::string> e){
+					catch (call_cont<std::string> &e){
 						reviewText = e.t;
 					}
 					double price = -1;
@@ -148,11 +174,13 @@ private:
 					Reviewer_p c = Reviewer::build(reviewProfileName, reviewUserId);
 					Helpfulness h = Helpfulness::build(std::stoi(pre_substr(reviewHelpfulness,"/")), 
 									  std::stoi(post_substr(reviewHelpfulness,"/")));
-					Review_p r = Review::build(reviewSummary,std::stod(reviewScore), std::stoi(reviewTime),c,h,p,reviewText);
+					auto r = Review::build(reviewSummary,std::stod(reviewScore), std::stoi(reviewTime),c,h,p,reviewText);
 					cs.insert(c);
 					ps.insert(p);
-					rs.insert(r);
+					rs.insert(std::move(r));
 				}
+				
+				writeToFile(filename,rs);
 				/*
 				new ObjectOutputStream(new FileOutputStream(new File(rprr))).writeObject(cs);
 				new ObjectOutputStream(new FileOutputStream(new File(rpr))).writeObject(rs);

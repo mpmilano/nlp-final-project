@@ -4,17 +4,17 @@
 #include "Product.hpp"
 #include <set>
 #include <unordered_map>
+#include "Memoize.hpp"
 
 class Review;
-typedef std::shared_ptr<Review> Review_p;
 
-class Reviewer {
+class Reviewer : public Memoizeable<std::shared_ptr<Reviewer> >{
 
 public:
 	const std::string profileName;
 	const std::string userID;
 	const int id;
-	std::set<Review_p> reviews;
+	std::set<Review*> reviews;
 
 private:
 	 static std::unordered_map<std::string, std::shared_ptr<Reviewer> >& lookup() {
@@ -24,18 +24,34 @@ private:
 
 	static int& idr() {static int idr = 0; return idr;}
 	
+	  class Memo : public ::Memo<std::shared_ptr<Reviewer> > {
+	    	std::string profileName;
+		std::string userID;
+		
+		friend class Reviewer;
+		Memo(std::string pn,std::string u):profileName(pn),userID(u){}
+		
+		  template<class Archive>
+		  void serialize(Archive &ar, const unsigned int /*version*/) {
+		  ar & profileName;
+		  ar & userID;
+		}
+		
+		std::shared_ptr<Reviewer> unpack() const {
+		    return build(profileName,userID);
+		}
+
+	};
 			
-	template<class Archive>
-	void serialize(Archive &ar, const unsigned int /*version*/) {
-		ar & profileName;
-		ar & userID;
-		ar & id;
-		ar & idr;
-	}
 	
 	Reviewer(std::string profileName, std::string userID):profileName(profileName),userID(userID),id(idr()++){}
 
 public:
+  
+  	Memo_p pack() const {
+	  return Memo_p(new Memo(profileName,userID));
+	}
+	
 	static std::shared_ptr<Reviewer> build(const std::string &profilename, const std::string &userid){
 		if (lookup().find(userid) != lookup().end()) return lookup().at(userid);
 		std::shared_ptr<Reviewer> p(new Reviewer(profilename, userid));
