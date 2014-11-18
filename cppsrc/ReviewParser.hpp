@@ -121,22 +121,24 @@ private:
 	  
 	  
 		std::string cachefile = "/tmp/rc/" + strReplace(filename,'/','%');
-		std::ifstream ifs(cachefile);
+		std::ifstream ifs(cachefile, std::ios::binary | std::ios_base::in);
 		if (! ifs.good()) return false;
 		std::cout << "file good - proceeding!" << std::endl;
 		boost::archive::binary_iarchive ia(ifs);
 		typename sets::Memo m;
 		ia >> m;
 		s = m.unpack();
+		ifs.close();
 		return true;
 	}
 	
 	static void writeToFile(const std::string& filename, sets &s) {
 	  	std::string cachefile = "/tmp/rc/" + strReplace(filename,'/','%');
-		std::ofstream ofs(cachefile);
+		std::ofstream ofs(cachefile, std::ios::binary | std::ios_base::in);
 		boost::archive::binary_oarchive oa(ofs);
 		auto t = s.pod_pack();
 		oa << t;
+		ofs.close();
 		return;
 	}
 	
