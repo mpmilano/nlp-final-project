@@ -11,9 +11,9 @@
 #include "Reviewer.hpp"
 #include "Review.hpp"
 #include "Helpfulness.hpp"
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/archive/binary_oarchive.hpp>
-
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/set.hpp>
 
 template<class Input>
 class ReviewParser {
@@ -77,150 +77,130 @@ private:
 		throw call_cont<std::string> (post_substr(racc.str(),prefix));
 	}
 
-	/**
-	   Give me a filename and three empty sets, and I'll populate the sets
-	   with all of the stuff in the file. 
-	 * @throws FileNotFoundException 
-	 */
 
-	static bool readFromFile(const std::string &filename, std::set<Reviewer_p > &rrs,
-					 std::set<Product_p > &ps, 
-					 std::set<Review_p > &rs) {
+public:
+	struct sets {
+		std::set<Reviewer_p> rrs;
+		std::set<Product_p> ps;
+		std::set<Review_p> rs;
+
+		struct Memo {
+
+			friend class boost::serialization::access;
+			std::set<Reviewer::Memo> rrs;
+			std::set<Product::Memo> ps;
+			std::set<Review::Memo> rs;
+			
+
+			template<typename Archive>
+			void serialize(Archive &a, const unsigned int ){
+				a & rrs;
+				a & ps;
+				a & rs;
+			}
+
+			sets unpack() const {
+				sets s;
+				for (auto &e : rrs) s.rrs.insert(e.unpack());
+				for (auto &e : ps) s.ps.insert(e.unpack());
+				for (auto &e : rs) s.rs.insert(e.unpack());
+				return s;
+			}
+
+			friend struct sets;
+			friend class ReviewParser;
+			Memo(){}
+		};		
+
+		Memo pod_pack() const {
+			Memo m;
+			for (auto &e: rrs) m.rrs.insert(e->pod_pack());
+			for (auto &e: ps) m.ps.insert(e->pod_pack());
+			for (auto &e: rs) m.rs.insert(e->pod_pack());
+			return m;
+		}
+
+			
+	};
+
+private:
+
+	static bool readFromFile(const std::string &filename, sets &s) {
 	  
 	  
-		std::string cachefileprefix = "/tmp/" + strReplace(filename,'/','%');
-		std::string rprr = cachefileprefix + "rp-rr.obj";
-		std::string rpp = cachefileprefix + "rp-p.obj";
-		std::string rpr = cachefileprefix + "rp-r.obj";
-		std::ifstream ifs(rpr);
+		std::string cachefile = "/tmp/" + strReplace(filename,'/','%');
+		std::ifstream ifs(cachefile);
 		if (! ifs.good()) return false;
 		std::cout << "file good - proceeding!" << std::endl;
-		boost::archive::binary_iarchive ia(ifs);
-		std::set<Reviewer_p>::size_type rrsize;
-		ia >> rrsize;
-		std::set<Product_p>::size_type psize;
-		ia >> psize;
-		std::set<Review_p>::size_type rsize;
-		ia >> rsize;
-		
-		for (std::set<Reviewer_p>::size_type i = 0; i < rrsize; ++i){
-			Reviewer::Memo r;
-			ia >> r;
-			rrs.insert(Reviewer_p(r.unpack()));
-		}
-
-		for (std::set<Product_p>::size_type i = 0; i < psize; ++i){
-			Product::Memo r;
-			ia >> r;
-			ps.insert(Product_p(r.unpack()));
-		}
-
-		for (std::set<Review_p>::size_type i = 0; i < rsize; ++i){
-			Review::Memo r;
-		    ia >> r;
-		    rs.insert(Review_p(r.unpack()));
-		}
-//*/
+		boost::archive::text_iarchive ia(ifs);
+		typename sets::Memo m;
+		ia >> m;
+		s = m.unpack();
 		return true;
 	}
 	
-	static void writeToFile(const std::string& filename, std::set<Reviewer_p > &rrs,
-					 std::set<Product_p > &ps, 
-					 std::set<Review_p > &rs){
-	  	std::string cachefileprefix = "/tmp/" + strReplace(filename,'/','%');
-		std::string rprr = cachefileprefix + "rp-rr.obj";
-		std::string rpp = cachefileprefix + "rp-p.obj";
-		std::string rpr = cachefileprefix + "rp-r.obj";
-		std::ofstream ofs(rpr);
-		boost::archive::binary_oarchive oa(ofs);
-		{
-		  auto tmp = rrs.size();
-		  oa << tmp;
-		}
-		for (const auto &r : rrs) { auto t1 = r->pod_pack(); oa << t1;}
-		{
-		  auto tmp = ps.size();
-		  oa << tmp;
-		}
-		for (const auto &r : ps) { auto t1 = r->pod_pack(); oa << t1;}
-		{
-		  auto tmp = rs.size();
-		  oa << tmp;
-		}
-		for (const auto &r : rs) { auto t1 = r->pod_pack(); oa << t1;}
-
+	static void writeToFile(const std::string& filename, sets &s) {
+	  	std::string cachefile = "/tmp/" + strReplace(filename,'/','%');
+		std::ofstream ofs(cachefile);
+		boost::archive::text_oarchive oa(ofs);
+		auto t = s.pod_pack();
+		oa << t;
 		return;
 	}
 	
 	public: 
-	    static void parse(const std::string &filename, std::set<Reviewer_p> &cs, std::set<Product_p> &ps, std::set<Review_p> &rs ) {
+	    static void parse(const std::string &filename, sets &s ) {
+
 		
 		    std::cout << "starting parse" << std::endl;
 
-		    if (readFromFile(filename,cs,ps,rs)) return;
+		    if (readFromFile(filename,s)) return;
 
-		Input f(filename);
-		ReviewParser rp(f);
-		int count = 0;
-		
+		    std::set<Reviewer_p> &cs = s.rrs;
+		    std::set<Product_p> &ps = s.ps;
+		    std::set<Review_p> &rs = s.rs;
+		    
+		    Input f(filename);
+		    ReviewParser rp(f);
+		    int count = 0;
 
-/*
-		std::string cachefileprefix = "/tmp/" + filename.replace('/','%');
-		std::string rprr = cachefileprefix + "rp-rr.obj";
-		std::string rpp = cachefileprefix + "rp-p.obj";
-		std::string rpr = cachefileprefix + "rp-r.obj";
-	
-		try {
-			cs.addAll((std::set<Reviewer>) new ObjectInputStream(new FileInputStream(new File(rprr))).readObject());
-			ps.addAll((std::set<Product>) new ObjectInputStream(new FileInputStream(new File(rpp))).readObject());
-			rs.addAll((std::set<Review>) new ObjectInputStream(new FileInputStream(new File(rpr))).readObject());
-			return;
-		}
-		catch (Exception ignoreme){
-*/
-
-		std::cout << "beginning parse" << std::endl;
-				while (f.good()){
-					++count;
-					std::string productId = rp.reallyRead("product/productId: ","product/title: ");
-					// { std::cout << "(yay) productID: " << productId << std::endl; }
-					std::string productTitle = rp.reallyRead("product/title: ","product/price: ");
-					//{ std::cout << "(yay) productTitle: " << productTitle << std::endl; }
-					std::string productPrice = rp.reallyRead("product/price: ", "review/userId: ");
-					std::string reviewUserId = rp.reallyRead("review/userId: ", "review/profileName: ");
-					std::string reviewProfileName = rp.reallyRead("review/profileName: ", "review/helpfulness: ");
-					std::string reviewHelpfulness = rp.reallyRead("review/helpfulness: ", "review/score: ");
-					std::string reviewScore = rp.reallyRead("review/score: ", "review/time: ");
-					std::string reviewTime = rp.reallyRead("review/time: ", "review/summary: ");
-					std::string reviewSummary = rp.reallyRead("review/summary: ", "review/text: ");
-					std::string reviewText = "";
-					try {
-						reviewText = rp.reallyRead("review/text: ", "product/productId: ");
-					}
-					catch (call_cont<std::string> &e){
-						reviewText = e.t;
-					}
-					double price = -1;
-					try {price = std::stod(productPrice);}
-					catch (...) {}
-					Product_p p = Product::build(productId, productTitle, price);
-					Reviewer_p c = Reviewer::build(reviewProfileName, reviewUserId);
-					Helpfulness h = Helpfulness::build(std::stoi(pre_substr(reviewHelpfulness,"/")), 
-									  std::stoi(post_substr(reviewHelpfulness,"/")));
-					auto r = Review::build(reviewSummary,std::stod(reviewScore), std::stoi(reviewTime),c,h,p,reviewText);
-					cs.insert(c);
-					ps.insert(p);
-					rs.insert(std::move(r));
-				}
-				
-				std::cout << "completed parse" << std::endl;
-				writeToFile(filename,cs, ps, rs);
-				/*
-				new ObjectOutputStream(new FileOutputStream(new File(rprr))).writeObject(cs);
-				new ObjectOutputStream(new FileOutputStream(new File(rpr))).writeObject(rs);
-				new ObjectOutputStream(new FileOutputStream(new File(rpp))).writeObject(ps);
-				*/
-			
-			/*}//*/
-	}
+		    std::cout << "beginning parse" << std::endl;
+		    while (f.good()){
+			    ++count;
+			    std::string productId = rp.reallyRead("product/productId: ","product/title: ");
+			    // { std::cout << "(yay) productID: " << productId << std::endl; }
+			    std::string productTitle = rp.reallyRead("product/title: ","product/price: ");
+			    //{ std::cout << "(yay) productTitle: " << productTitle << std::endl; }
+			    std::string productPrice = rp.reallyRead("product/price: ", "review/userId: ");
+			    std::string reviewUserId = rp.reallyRead("review/userId: ", "review/profileName: ");
+			    std::string reviewProfileName = rp.reallyRead("review/profileName: ", "review/helpfulness: ");
+			    std::string reviewHelpfulness = rp.reallyRead("review/helpfulness: ", "review/score: ");
+			    std::string reviewScore = rp.reallyRead("review/score: ", "review/time: ");
+			    std::string reviewTime = rp.reallyRead("review/time: ", "review/summary: ");
+			    std::string reviewSummary = rp.reallyRead("review/summary: ", "review/text: ");
+			    std::string reviewText = "";
+			    try {
+				    reviewText = rp.reallyRead("review/text: ", "product/productId: ");
+			    }
+			    catch (call_cont<std::string> &e){
+				    reviewText = e.t;
+			    }
+			    double price = -1;
+			    try {price = std::stod(productPrice);}
+			    catch (...) {}
+			    Product_p p = Product::build(productId, productTitle, price);
+			    Reviewer_p c = Reviewer::build(reviewProfileName, reviewUserId);
+			    Helpfulness h = Helpfulness::build(std::stoi(pre_substr(reviewHelpfulness,"/")), 
+							       std::stoi(post_substr(reviewHelpfulness,"/")));
+			    auto r = Review::build(reviewSummary,std::stod(reviewScore), std::stoi(reviewTime),c,h,p,reviewText);
+			    cs.insert(c);
+			    ps.insert(p);
+			    rs.insert(std::move(r));
+		    }
+		    
+		    std::cout << "completed parse" << std::endl;
+		    writeToFile(filename,s);
+		    
+		    { std::cout << "number of reviewers: " << cs.size() << std::endl; }
+	    }
 };

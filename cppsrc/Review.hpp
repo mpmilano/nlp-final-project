@@ -23,6 +23,10 @@ public:
 
   
 	class Memo : public ::Memo<Review_p> {
+
+		bool serialize_called = false;
+		const bool from_const = false;
+
 		friend class boost::serialization::access;	
 		std::string summary;
 		double score;
@@ -34,6 +38,7 @@ public:
 	
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int /*version*/)  {
+  			ar & boost::serialization::base_object<::Memo<Review_p> > (*this);
 			ar & summary;
 			ar & score;
 			ar & time;
@@ -44,6 +49,14 @@ public:
 		}
 		
 	public: 
+		bool operator<(const Memo &o) const {
+			return score < o.score ? true :
+				time < o.time ? true : 
+				help < o.help ? true :
+				summary < o.summary ? true : 
+				text < o.text;
+		}
+
 		Review_p unpack() const{
 			auto rr = reviewer.unpack();
 			auto pr = product.unpack();
@@ -52,8 +65,13 @@ public:
 		
 
 		Memo(std::string s, double sc, int t, Reviewer::Memo r, Helpfulness h, Product::Memo p, std::string tx)
-			:summary(s),score(sc),time(t),reviewer(std::move(r)),help(h),product(std::move(p)),text(tx){}
+			:from_const(true),
+			 summary(s),score(sc),time(t),reviewer(std::move(r)),help(h),product(std::move(p)),text(tx){}
 		Memo(){}
+
+		bool from_archive() const {return serialize_called && (!from_const); }
+		bool from_pack() const {return from_const;}
+
 		
 	};	
 

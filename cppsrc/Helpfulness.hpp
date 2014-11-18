@@ -17,4 +17,9 @@ public:
 		a & this->first;
 		a & this->second;
 	}
+
+	bool operator<(const Helpfulness& h) const {
+		return this->first < h.first ? true 
+				     : this->second < h.second;
+	}
 };
