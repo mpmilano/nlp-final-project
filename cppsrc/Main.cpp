@@ -18,6 +18,5 @@ int main() {
 	//ReviewParser<ifstream>::parse(prefix + "Clothing_&_Accessories.txt",s);
 	ReviewParser<ifstream>::parse(prefix + "Gourmet_Foods.txt",s);
 	ReviewParser<ifstream>::parse(prefix + "all-head.txt",s);
-
 	sleep(12);
 }
