@@ -13,7 +13,7 @@
 #include "Helpfulness.hpp"
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
-#include <boost/serialization/set.hpp>
+#include <boost/serialization/list.hpp>
 
 template<class Input>
 class ReviewParser {
@@ -77,9 +77,9 @@ public:
 		struct Memo {
 
 			friend class boost::serialization::access;
-			std::set<Reviewer::Memo> rrs;
-			std::set<Product::Memo> ps;
-			std::set<Review::Memo> rs;
+			std::list<Reviewer::Memo> rrs;
+			std::list<Product::Memo> ps;
+			std::list<Review::Memo> rs;
 			
 
 			template<typename Archive>
@@ -106,9 +106,9 @@ public:
 		Memo pod_pack() const {
 			Memo m;
 			{ std:: cout << "sizes: " << rrs.size() << " " << ps.size() << " " << rs.size() << std::endl; }
-			for (auto &e: rrs) m.rrs.insert(e->pod_pack());
-			for (auto &e: ps) m.ps.insert(e->pod_pack());
-			for (auto &e: rs) m.rs.insert(e->pod_pack());
+			for (auto &e: rrs) m.rrs.push_back(e->pod_pack());
+			for (auto &e: ps) m.ps.push_back(e->pod_pack());
+			for (auto &e: rs) m.rs.push_back(e->pod_pack());
 			return m;
 		}
 
@@ -120,7 +120,7 @@ private:
 	static bool readFromFile(const std::string &filename, sets &s) {
 	  
 	  
-		std::string cachefile = "/tmp/" + strReplace(filename,'/','%');
+		std::string cachefile = "/tmp/rc/" + strReplace(filename,'/','%');
 		std::ifstream ifs(cachefile);
 		if (! ifs.good()) return false;
 		std::cout << "file good - proceeding!" << std::endl;
@@ -132,7 +132,7 @@ private:
 	}
 	
 	static void writeToFile(const std::string& filename, sets &s) {
-	  	std::string cachefile = "/tmp/" + strReplace(filename,'/','%');
+	  	std::string cachefile = "/tmp/rc/" + strReplace(filename,'/','%');
 		std::ofstream ofs(cachefile);
 		boost::archive::binary_oarchive oa(ofs);
 		auto t = s.pod_pack();

@@ -13,7 +13,8 @@ int main() {
 
 	std::string prefix = "/home/milano/course/nlp/data/";
 	
-	ReviewParser<ifstream>::parse(prefix + "Electronics.txt", s);
+	//ReviewParser<ifstream>::parse(prefix + "Electronics.txt", s);
 	//ReviewParser<ifstream>::parse(prefix + "Clothing_&_Accessories.txt",s);
 	//ReviewParser<ifstream>::parse(prefix + "Gourmet_Foods.txt",s);
+	ReviewParser<ifstream>::parse(prefix + "all-head.txt",s);
 }

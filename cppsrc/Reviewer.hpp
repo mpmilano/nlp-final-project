@@ -45,7 +45,6 @@ public:
 		
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int /*version*/) {
-  			ar & boost::serialization::base_object<::Memo<Reviewer_p> > (*this);
 			ar & id;
 			ar & profileName;
 			ar & userID;
@@ -53,6 +52,7 @@ public:
 			serialize_called = true;
 		}
 	public:
+		int gid() { return id;}
 
 		bool operator<(const Memo &o) const {return id < o.id; }
 
@@ -73,6 +73,8 @@ public:
 			return ret;
 		}
 		Memo(){}
+
+		Memo(int id):serialize_called(true),id(id){}
 		
 	};
 	

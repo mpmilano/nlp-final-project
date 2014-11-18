@@ -56,6 +56,7 @@ public:
   		bool serialize_called = false;
   		const bool from_const = false;
   		int id = -1;
+  		int gid() {return id;}
   		std::string productID;
   		std::string title;
   		double price;
@@ -63,6 +64,7 @@ public:
   		Memo(int id, std::string p, std::string t, double pr)
 			:from_const(true),id(id),productID(p),title(t),price(pr){}
 		Memo(){}
+			Memo(int id):serialize_called(true),id(id){}
 		
   		Product_p unpack() const { 
 			assert(serialize_called);
@@ -82,7 +84,6 @@ public:
 		
   		template<class Archive>
   		void serialize(Archive &ar, const unsigned int /*version*/) {
-  			ar & boost::serialization::base_object<::Memo<Product_p> > (*this);
   			ar & id;
   			ar & productID;
   			ar & title;

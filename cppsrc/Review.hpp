@@ -35,14 +35,13 @@ public:
 		std::string summary;
 		double score;
 		int time;
-		Reviewer::Memo reviewer;
+		int reviewer;
 		Helpfulness help;
-		Product::Memo product;
+		int product;
 		std::string text;
 	
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int /*version*/)  {
-  			ar & boost::serialization::base_object<::Memo<Review_p> > (*this);
 			ar & id;
 			ar & summary;
 			ar & score;
@@ -59,15 +58,15 @@ public:
 		}
 
 		Review_p unpack() const{
-			auto rr = reviewer.unpack();
-			auto pr = product.unpack();
+			auto rr = (Reviewer::Memo(reviewer)).unpack();
+			auto pr = (Product::Memo(product)).unpack();
 			return build(summary,score,time,rr,help,pr,text); 
 		}
 		
 
 		Memo(int id, std::string s, double sc, int t, Reviewer::Memo r, Helpfulness h, Product::Memo p, std::string tx)
 			:from_const(true),
-			 id(id),summary(s),score(sc),time(t),reviewer(std::move(r)),help(h),product(std::move(p)),text(tx){}
+			 id(id),summary(s),score(sc),time(t),reviewer(r.gid()),help(h),product(p.gid()),text(tx){}
 		Memo(){}
 
 		bool from_archive() const {return serialize_called && (!from_const); }
