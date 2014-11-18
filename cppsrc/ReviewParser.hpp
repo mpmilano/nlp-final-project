@@ -11,8 +11,8 @@
 #include "Reviewer.hpp"
 #include "Review.hpp"
 #include "Helpfulness.hpp"
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/set.hpp>
 
 template<class Input>
@@ -48,9 +48,7 @@ private:
 	}
 
 	std::string reallyRead(const std::string &prefix, const std::string &done) {
-		//{ std::cout << "starting at: " << prefix << " stopping at: " << done << std::endl; }
 		std::string acc = rangeFromOverflow(prefix, done);
-		//{ std::cout << "overflow had: " << acc << std::endl; }
 		std::stringstream racc;
 		racc << acc;
 		if (strContains(overflow,done)) return post_substr(acc,prefix);
@@ -58,14 +56,6 @@ private:
 			std::getline(r,acc);
 			std::string::size_type split = acc.find(done);
 			if (split != std::string::npos){
-				/*{
-					assert(acc.find(done) == split);
-					assert(done[0] == acc[split]);
-					std::cout << "diagnostics" << std::endl;
-					std::cout << acc << std::endl;
-					std::cout << done << " at " << split << std::endl;
-					std::cout << "racc has " << racc.str() << std::endl;
-				}//*/
 				overflow = acc.substr(split);
 				racc << acc.substr(0,split);
 				std::string ret_w_prefix = racc.str();
@@ -132,7 +122,7 @@ private:
 		std::ifstream ifs(cachefile);
 		if (! ifs.good()) return false;
 		std::cout << "file good - proceeding!" << std::endl;
-		boost::archive::text_iarchive ia(ifs);
+		boost::archive::binary_iarchive ia(ifs);
 		typename sets::Memo m;
 		ia >> m;
 		s = m.unpack();
@@ -142,7 +132,7 @@ private:
 	static void writeToFile(const std::string& filename, sets &s) {
 	  	std::string cachefile = "/tmp/" + strReplace(filename,'/','%');
 		std::ofstream ofs(cachefile);
-		boost::archive::text_oarchive oa(ofs);
+		boost::archive::binary_oarchive oa(ofs);
 		auto t = s.pod_pack();
 		oa << t;
 		return;
@@ -168,9 +158,7 @@ private:
 		    while (f.good()){
 			    ++count;
 			    std::string productId = rp.reallyRead("product/productId: ","product/title: ");
-			    // { std::cout << "(yay) productID: " << productId << std::endl; }
 			    std::string productTitle = rp.reallyRead("product/title: ","product/price: ");
-			    //{ std::cout << "(yay) productTitle: " << productTitle << std::endl; }
 			    std::string productPrice = rp.reallyRead("product/price: ", "review/userId: ");
 			    std::string reviewUserId = rp.reallyRead("review/userId: ", "review/profileName: ");
 			    std::string reviewProfileName = rp.reallyRead("review/profileName: ", "review/helpfulness: ");

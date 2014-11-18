@@ -3,7 +3,6 @@
 #include <iostream>
 
 //TODO - for debugging
-bool failnow = false;
 
 inline bool strEndsWith(const std::string &s, const std::string &end){
 	return s.find(end) + end.length() == s.length();

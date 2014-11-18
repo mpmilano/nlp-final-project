@@ -67,7 +67,6 @@ public:
 			assert(id != -1);
 			static std::unordered_map<int, Product_p> pm;
 			if (pm.find(id) != pm.end()) return pm.at(id);
-			if (failnow) assert(false && "Product not in set?");
 			Product_p ret(new Product(id,productID, title, price));
 			lookup()[productID] = ret;
 			pm[id] = ret;

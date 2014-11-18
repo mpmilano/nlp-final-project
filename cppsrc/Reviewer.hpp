@@ -63,17 +63,10 @@ public:
 			assert(serialize_called);
 			assert (id != -1);
 			static std::unordered_map<int, Reviewer_p> rm;
-
-			std::cout << "name: " << profileName << std::endl;
 			
 			if (rm.find(id) != rm.end()){
 				return rm.at(id);
 			}
-			if (failnow){ 
-				std::cout << id << std::endl;
-				assert(false && "Reviewer not in set?");
-			}
-			{ std::cout << profileName << ":" << id << std::endl; }
 			Reviewer_p ret(new Reviewer(id,profileName,userID));
 			lookup()[userID] = ret;
 			rm[id] = ret;
@@ -92,7 +85,6 @@ private:
 		idr() += (id - idr() + 1);
 	}
 	Reviewer(std::string profileName, std::string userID):profileName(profileName),userID(userID),id(++(idr())){
-		{ if (id == 11) std::cout << profileName << std::endl;}
 		generated_id = true;
 	}
 	
