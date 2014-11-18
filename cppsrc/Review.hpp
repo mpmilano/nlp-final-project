@@ -12,7 +12,10 @@ typedef std::unique_ptr<Review> Review_p;
 class Review : public Memoizeable<Review_p> {
 
 private:
+	int & idr() {static int idr = 0; return idr; }
+	int id;
 public:
+
 	const std::string summary;
 	const double score;
 	const int time;
@@ -28,6 +31,7 @@ public:
 		const bool from_const = false;
 
 		friend class boost::serialization::access;	
+		int id;
 		std::string summary;
 		double score;
 		int time;
@@ -39,6 +43,7 @@ public:
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int /*version*/)  {
   			ar & boost::serialization::base_object<::Memo<Review_p> > (*this);
+			ar & id;
 			ar & summary;
 			ar & score;
 			ar & time;
@@ -50,11 +55,7 @@ public:
 		
 	public: 
 		bool operator<(const Memo &o) const {
-			return score < o.score ? true :
-				time < o.time ? true : 
-				help < o.help ? true :
-				summary < o.summary ? true : 
-				text < o.text;
+			return id < o.id;
 		}
 
 		Review_p unpack() const{
@@ -64,9 +65,9 @@ public:
 		}
 		
 
-		Memo(std::string s, double sc, int t, Reviewer::Memo r, Helpfulness h, Product::Memo p, std::string tx)
+		Memo(int id, std::string s, double sc, int t, Reviewer::Memo r, Helpfulness h, Product::Memo p, std::string tx)
 			:from_const(true),
-			 summary(s),score(sc),time(t),reviewer(std::move(r)),help(h),product(std::move(p)),text(tx){}
+			 id(id),summary(s),score(sc),time(t),reviewer(std::move(r)),help(h),product(std::move(p)),text(tx){}
 		Memo(){}
 
 		bool from_archive() const {return serialize_called && (!from_const); }
@@ -75,8 +76,8 @@ public:
 		
 	};	
 
-	Memo_p pack() const {return Memo_p(new Memo(summary,score,time,reviewer->pod_pack(),help,product->pod_pack(),text));}
-	Memo pod_pack() const {return Memo(summary,score,time,reviewer->pod_pack(),help,product->pod_pack(),text);}
+	Memo_p pack() const {return Memo_p(new Memo(id,summary,score,time,reviewer->pod_pack(),help,product->pod_pack(),text));}
+	Memo pod_pack() const {return Memo(id,summary,score,time,reviewer->pod_pack(),help,product->pod_pack(),text);}
 
 private: 
 	Review(const std::string summary, 
@@ -86,6 +87,7 @@ private:
 	       const Helpfulness& help, 
 	       const Product_p& product, 
 	       const std::string& text):
+		id(++(idr())),
 		summary(summary),
 		score(score),
 		time(time),

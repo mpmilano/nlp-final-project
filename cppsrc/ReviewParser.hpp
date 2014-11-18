@@ -94,6 +94,7 @@ public:
 				for (auto &e : rrs) s.rrs.insert(e.unpack());
 				for (auto &e : ps) s.ps.insert(e.unpack());
 				for (auto &e : rs) s.rs.insert(e.unpack());
+				{ std:: cout << "sizes: " << s.rrs.size() << " " << s.ps.size() << " " << s.rs.size() << std::endl; }
 				return s;
 			}
 
@@ -104,6 +105,7 @@ public:
 
 		Memo pod_pack() const {
 			Memo m;
+			{ std:: cout << "sizes: " << rrs.size() << " " << ps.size() << " " << rs.size() << std::endl; }
 			for (auto &e: rrs) m.rrs.insert(e->pod_pack());
 			for (auto &e: ps) m.ps.insert(e->pod_pack());
 			for (auto &e: rs) m.rs.insert(e->pod_pack());

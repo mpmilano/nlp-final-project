@@ -17,6 +17,7 @@ class Product;
 typedef std::shared_ptr<Product> Product_p;
 
 class Product : public Memoizeable<Product_p> {
+	bool generated_id = false;
 public:
 	const std::string productID;
 	const std::string title;
@@ -36,12 +37,13 @@ private:
 	
 	Product(const std::string &productID, const std::string &title, const double &price)
 		:productID(productID),title(title),price(price),id(++(idr())){
+		generated_id = true;
 		assert(lookup().find(productID) == lookup().end());
 	}
 
 	Product(int id, const std::string &productID, const std::string &title, const double &price)
 		:productID(productID),title(title),price(price),id(id) {
-		assert(id > idr()); //ID collision is technically possible.
+		assert((!generated_id) || id > idr()); //ID collision is technically possible.
 		idr() += (id - idr() + 1);
 	}
 
