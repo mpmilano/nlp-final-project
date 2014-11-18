@@ -114,6 +114,9 @@ public:
 		   p->reviews.erase(this);
 		   r->reviews.erase(this);
 	}
+
+	//no caches to purge here!
+	static void constructionDone(){}
 	
 };
 

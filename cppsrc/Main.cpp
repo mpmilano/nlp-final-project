@@ -6,17 +6,28 @@
 #include "ReviewParser.hpp"
 #include <fstream>
 #include <unistd.h>
+#include <vector>
 
 using namespace std;
 int main() {
 	
 	ReviewParser<ifstream>::sets s;
-
+	
+	vector<string> names = {
+			"Electronics.txt", 
+			"Clothing_&_Accessories.txt", 
+			"Gourmet_Foods.txt",
+			"all-head.txt"
+		};
+	
 	std::string prefix = "/home/milano/course/nlp/data/";
 	
-	//ReviewParser<ifstream>::parse(prefix + "Electronics.txt", s);
-	//ReviewParser<ifstream>::parse(prefix + "Clothing_&_Accessories.txt",s);
-	ReviewParser<ifstream>::parse(prefix + "Gourmet_Foods.txt",s);
-	ReviewParser<ifstream>::parse(prefix + "all-head.txt",s);
+	for (auto& endfix : names){
+		ReviewParser<ifstream>::parse(prefix + endfix,s);
+	}
+	Product::constructionDone();
+	Review::constructionDone();
+	Reviewer::constructionDone();
 	sleep(12);
+
 }

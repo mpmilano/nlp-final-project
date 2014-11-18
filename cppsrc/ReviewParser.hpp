@@ -13,7 +13,7 @@
 #include "Helpfulness.hpp"
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
-#include <boost/serialization/list.hpp>
+#include <boost/serialization/vector.hpp>
 
 template<class Input>
 class ReviewParser {
@@ -74,12 +74,17 @@ public:
 		std::set<Product_p> ps;
 		std::set<Review_p> rs;
 
+		sets(std::set<Reviewer_p> rrs, 	std::set<Product_p> ps, std::set<Review_p> rs)
+			:rrs(rrs),ps(ps),rs(rs){}
+		sets(){}
+
+
 		struct Memo : public ::Memo<sets> {
 
 			friend class boost::serialization::access;
-			std::list<Reviewer::Memo> rrs;
-			std::list<Product::Memo> ps;
-			std::list<Review::Memo> rs;
+			std::vector<Reviewer::Memo> rrs;
+			std::vector<Product::Memo> ps;
+			std::vector<Review::Memo> rs;
 			
 
 			template<typename Archive>
@@ -89,14 +94,21 @@ public:
 				a & rs;
 			}
 
-			sets unpack() const {
-				sets s;
+			void unpack_into(sets &s) const {
 				for (auto &e : rrs) s.rrs.insert(e.unpack());
 				for (auto &e : ps) s.ps.insert(e.unpack());
 				for (auto &e : rs) s.rs.insert(e.unpack());
 				{ std:: cout << "sizes: " << s.rrs.size() << " " << s.ps.size() << " " << s.rs.size() << std::endl; }
+
+			}
+
+			sets unpack() const {
+				sets s;
+				unpack_into(s);
 				return s;
 			}
+
+
 
 			friend struct sets;
 			friend class ReviewParser;
@@ -106,10 +118,13 @@ public:
 			virtual bool from_archive() const { assert(false && "na"); }
 			virtual bool from_pack() const { assert(false && "na"); }
 
-		};		
+		};
 
 		Memo pod_pack() const {
 			Memo m;
+			m.rrs.reserve(rrs.size());
+			m.ps.reserve(ps.size());
+			m.rs.reserve(rs.size());
 			{ std:: cout << "sizes: " << rrs.size() << " " << ps.size() << " " << rs.size() << std::endl; }
 			for (auto &e: rrs) m.rrs.push_back(e->pod_pack());
 			for (auto &e: ps) m.ps.push_back(e->pod_pack());
@@ -133,7 +148,7 @@ private:
 			boost::archive::binary_iarchive ia(ifs);
 			typename sets::Memo m;
 			ia >> m;
-			s = m.unpack();
+			m.unpack_into(s);
 		}
 		ifs.close();
 		return true;
@@ -158,10 +173,12 @@ private:
 		    std::cout << "starting parse" << std::endl;
 
 		    if (readFromFile(filename,s)) return;
+		    
+		    sets sout;
 
-		    std::set<Reviewer_p> &cs = s.rrs;
-		    std::set<Product_p> &ps = s.ps;
-		    std::set<Review_p> &rs = s.rs;
+		    std::set<Reviewer_p> &cs = sout.rrs;
+		    std::set<Product_p> &ps = sout.ps;
+		    std::set<Review_p> &rs = sout.rs;
 		    
 		    Input f(filename);
 		    ReviewParser rp(f);
@@ -195,12 +212,16 @@ private:
 							       std::stoi(post_substr(reviewHelpfulness,"/")));
 			    auto r = Review::build(reviewSummary,std::stod(reviewScore), std::stoi(reviewTime),c,h,p,reviewText);
 			    cs.insert(c);
+			    s.rrs.insert(c);
 			    ps.insert(p);
+			    s.ps.insert(p);
+			    s.rs.insert(Review_p(new Review(*r)));
 			    rs.insert(std::move(r));
 		    }
 		    
 		    std::cout << "completed parse" << std::endl;
-		    writeToFile(filename,s);
+		    
+		    writeToFile(filename,sout);
 		    
 		    { std::cout << "number of reviewers: " << cs.size() << std::endl; }
 	    }

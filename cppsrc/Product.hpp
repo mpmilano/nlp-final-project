@@ -1,5 +1,7 @@
 #pragma once
 
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/export.hpp>
 #include <string>
 #include <set>
 #include "Review.hpp"
@@ -8,8 +10,6 @@
 #include <cassert>
 #include "Memoize.hpp"
 #include "StringUtils.hpp"
-#include <boost/serialization/base_object.hpp>
-#include <boost/serialization/export.hpp>
 
 class Review;
 
@@ -40,18 +40,20 @@ private:
 		generated_id = true;
 		assert(lookup().find(productID) == lookup().end());
 	}
-
+	
 	Product(int id, const std::string &productID, const std::string &title, const double &price)
 		:productID(productID),title(title),price(price),id(id) {
 		assert((!generated_id) || id > idr()); //ID collision is technically possible.
 		idr() += (id - idr() + 1);
 	}
-
+	
 	
 public: 
 	
 	
 	class Memo : public ::Memo<Product_p> {
+	private:
+		static std::unordered_map<int, Product_p> & pm(){static std::unordered_map<int, Product_p> pm; return pm;}
   	public:
   		bool serialize_called = false;
   		const bool from_const = false;
@@ -66,14 +68,13 @@ public:
 		Memo(){}
 			Memo(int id):serialize_called(true),id(id){}
 		
-  		Product_p unpack() const { 
+  		Product_p unpack() const {
 			assert(serialize_called);
 			assert(id != -1);
-			static std::unordered_map<int, Product_p> pm;
-			if (pm.find(id) != pm.end()) return pm.at(id);
+			if (pm().find(id) != pm().end()) return pm().at(id);
 			Product_p ret(new Product(id,productID, title, price));
 			lookup()[productID] = ret;
-			pm[id] = ret;
+			pm()[id] = ret;
 			return ret;
 		}
 
@@ -113,6 +114,9 @@ public:
 		// TODO Auto-generated method stub
 		return (this == &o) ? 0 : (id < o.id ? -1 : id == o.id ? 0 : 1);
 	}
+	
+	static void constructionDone() { lookup().clear(); Memo::pm().clear(); }
+
 };
 typedef std::shared_ptr<Product> Product_p;
 

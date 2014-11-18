@@ -32,6 +32,10 @@ private:
 public:	
 	class Memo : public ::Memo<std::shared_ptr<Reviewer> > {
 		
+		static std::unordered_map<int, Reviewer_p> & rm() {
+			static std::unordered_map<int, Reviewer_p> rm; return rm; 
+		}
+
 		bool serialize_called = false;
 		const bool from_const = false;
 		int id = -1;
@@ -61,15 +65,13 @@ public:
 
 		std::shared_ptr<Reviewer> unpack() const {
 			assert(serialize_called);
-			assert (id != -1);
-			static std::unordered_map<int, Reviewer_p> rm;
-			
-			if (rm.find(id) != rm.end()){
-				return rm.at(id);
+			assert (id != -1);	
+			if (rm().find(id) != rm().end()){
+				return rm().at(id);
 			}
 			Reviewer_p ret(new Reviewer(id,profileName,userID));
 			lookup()[userID] = ret;
-			rm[id] = ret;
+			rm()[id] = ret;
 			return ret;
 		}
 		Memo(){}
@@ -108,6 +110,8 @@ public:
 	int compareTo(const Reviewer &o) const {
 		return id < o.id ? -1 : id == o.id ? 0 : 1; 
 	}
+
+	static void constructionDone() { lookup().clear(); Memo::rm().clear(); }
 	
 };
 
