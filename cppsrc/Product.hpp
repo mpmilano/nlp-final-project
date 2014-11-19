@@ -64,7 +64,7 @@ public:
   		Product_pp unpack() const {
 			assert(serialize_called);
 			assert(id != -1);
-			if (builder::b()->pm.find(id) != builder::b()->pm.end()) return builder::b()->pm.at(id).lock();
+			if (builder::b()->pm.find(id) != builder::b()->pm.end()) return builder::b()->pm.at(id);
 			Product_pp ret(new Product(id,productID, title, price));
 			builder::b()->lookup[productID] = ret;
 			builder::b()->pm[id] = ret;
@@ -97,23 +97,23 @@ public:
 	class builder {
 		friend class Product;
 		static plain_ptr<builder>& b() {static plain_ptr<builder> b(nullptr); return b;}
-		std::unordered_map<std::string, Product_p > lookup;
+		std::unordered_map<std::string, Product_pp > lookup;
 		int idr = 0;
-		std::unordered_map<int, Product_p> pm;
+		std::unordered_map<int, Product_pp> pm;
 	public:
 
 		builder(){ assert(b() == nullptr); b() = this; }
 		virtual ~builder() {b() = nullptr; std::cout << "builder done" << std::endl;}
 
 		Product_pp build(const std::string &productID, const std::string &title, double price){
-			if (lookup.find(productID) != lookup.end()) return lookup.at(productID).lock();
+			if (lookup.find(productID) != lookup.end()) return lookup.at(productID);
 			Product_pp p( new Product(productID, title, price));
 			lookup[productID] = p;
 			return p;
 		}
 		
 		Product_pp build(const std::string &productID){
-			return lookup.at(productID).lock();
+			return lookup.at(productID);
 		}
 	};
 	

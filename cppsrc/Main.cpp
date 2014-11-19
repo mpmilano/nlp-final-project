@@ -33,5 +33,5 @@ int main() {
 	}
 	std::cout << "done, all memory should be cleared up..." << std::endl;
 	
-	sleep(1200);
+
 }

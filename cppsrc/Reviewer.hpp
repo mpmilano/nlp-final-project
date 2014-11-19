@@ -57,7 +57,7 @@ public:
 			assert(serialize_called);
 			assert (id != -1);	
 			if (builder::b()->rm.find(id) != builder::b()->rm.end()){
-				return builder::b()->rm.at(id).lock();
+				return builder::b()->rm.at(id);
 			}
 			Reviewer_pp ret(new Reviewer(id,profileName,userID));
 			builder::b()->lookup[userID] = ret;
@@ -94,8 +94,8 @@ public:
 	friend class builder;
 	class builder{
 		friend class Reviewer;
-		std::unordered_map<int, Reviewer_p> rm;
-		std::unordered_map<std::string, Reviewer_p > lookup;
+		std::unordered_map<int, Reviewer_pp> rm;
+		std::unordered_map<std::string, Reviewer_pp > lookup;
 		int idr = 0;
 		static plain_ptr<builder>& b() {static plain_ptr<builder> b(nullptr); return b;}
 
@@ -104,7 +104,7 @@ public:
 		virtual ~builder() {b() = nullptr; std::cout << "builder done" << std::endl;}
 
 		Reviewer_pp build(const std::string &profilename, const std::string &userid){
-			if (lookup.find(userid) != lookup.end()) return lookup.at(userid).lock();
+			if (lookup.find(userid) != lookup.end()) return lookup.at(userid);
 			Reviewer_pp p(new Reviewer(profilename, userid));
 			lookup[userid] = p;
 			return p;

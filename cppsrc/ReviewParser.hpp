@@ -179,7 +179,10 @@ private:
 		
 		    std::cout << "starting parse" << std::endl;
 
-		    //if (readFromFile(filename,s)) return;
+		    Input f(filename);
+		    ReviewParser rp(f);
+
+		    if (rp.readFromFile(filename,s)) return;
 		    
 		    sets sout;
 
@@ -187,8 +190,6 @@ private:
 		    std::set<Product_p> &ps = sout.ps;
 		    std::set<Review_p> &rs = sout.rs;
 		    
-		    Input f(filename);
-		    ReviewParser rp(f);
 		    int count = 0;
 
 		    std::cout << "beginning parse" << std::endl;
@@ -228,7 +229,7 @@ private:
 		    
 		    std::cout << "completed parse" << std::endl;
 		    
-		    //writeToFile(filename,sout);
+		    rp.writeToFile(filename,sout);
 		    
 		    { std::cout << "number of reviewers: " << cs.size() << std::endl; }
 	    }
