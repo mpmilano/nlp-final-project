@@ -11,9 +11,6 @@
 #include "Reviewer.hpp"
 #include "Review.hpp"
 #include "Helpfulness.hpp"
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/serialization/vector.hpp>
 
 template<typename T> 
 bool operator< (const std::weak_ptr<T> &a, const std::weak_ptr<T> &b){
@@ -36,10 +33,10 @@ private:
 
 	
 	std::string overflow = "";
+	std::vector<std::string> v1;
 	std::string rangeFromOverflow(const std::string &prefix, const std::string &done){
 		if (strContains(overflow, prefix)){
 			if (strEndsWith(overflow, prefix)) return prefix;
-			static std::vector<std::string> v1;
 			v1.clear();
 			std::string tmp = overflow.substr(overflow.find(prefix) + prefix.length());
 			auto pos = tmp.find(done);
@@ -86,7 +83,6 @@ public:
 
 		struct Memo : public ::Memo<sets> {
 
-			friend class boost::serialization::access;
 			std::vector<Reviewer::Memo> rrs;
 			std::vector<Product::Memo> ps;
 			std::vector<Review::Memo> rs;
@@ -143,37 +139,37 @@ public:
 	
 private:
 
-	static bool readFromFile(const std::string &filename, sets &s) {
+	bool readFromFile(const std::string &filename, sets &s) {
 	  
 	  
 		std::string cachefile = "/tmp/rc/" + strReplace(filename,'/','%');
 		std::ifstream ifs(cachefile, std::ios::binary | std::ios_base::in);
 		if (! ifs.good()) return false;
-		{
+		/*{
 			std::cout << "file good - proceeding!" << std::endl;
 			boost::archive::binary_iarchive ia(ifs);
 			typename sets::Memo m;
 			ia >> m;
 			m.unpack_into(s);
-		}
+		}//*/
 		ifs.close();
 		return true;
 	}
 	
-	static void writeToFile(const std::string& filename, sets &s) {
+	void writeToFile(const std::string& filename, sets &s) {
 	  	std::string cachefile = "/tmp/rc/" + strReplace(filename,'/','%');
 		std::ofstream ofs(cachefile, std::ios::binary | std::ios_base::out);
-		{
+		/*{
 			boost::archive::binary_oarchive oa(ofs);
 			auto t = s.pod_pack();
 			oa << t;
-		}
+		}//*/
 		ofs.close();
 		return;
 	}
 	
 	public: 
-	    static void parse(const std::string &filename, sets &s ) {
+	static void parse(const std::string &filename, Reviewer::builder &rrb, Product::builder &pb, Review::builder &rb, sets &s ) {
 
 		
 		    std::cout << "starting parse" << std::endl;
@@ -212,11 +208,11 @@ private:
 			    double price = -1;
 			    try {price = std::stod(productPrice);}
 			    catch (...) {}
-			    auto p = (Product::build(productId, productTitle, price));
-			    auto c = (Reviewer::build(reviewProfileName, reviewUserId));
+			    auto p = (pb.build(productId, productTitle, price));
+			    auto c = (rrb.build(reviewProfileName, reviewUserId));
 			    Helpfulness h = Helpfulness::build(std::stoi(pre_substr(reviewHelpfulness,"/")), 
 							       std::stoi(post_substr(reviewHelpfulness,"/")));
-			    auto r = Review::build(reviewSummary,std::stod(reviewScore), std::stoi(reviewTime),c,h,p,reviewText);
+			    auto r = rb.build(reviewSummary,std::stod(reviewScore), std::stoi(reviewTime),c,h,p,reviewText);
 			    cs.insert(Reviewer_p(c));
 			    s.rrs.insert(Reviewer_p(c));
 			    ps.insert(Product_p(p));

@@ -1,15 +1,13 @@
 #pragma once
 
-#include <boost/serialization/base_object.hpp>
-#include <boost/serialization/export.hpp>
 #include <string>
 #include <set>
-#include "Review.hpp"
 #include <memory>
 #include <unordered_map>
 #include <cassert>
 #include "Memoize.hpp"
 #include "StringUtils.hpp"
+#include "Review.hpp"
 
 class Review;
 
@@ -29,24 +27,18 @@ public:
 	
 	
 private:
-	static std::unordered_map<std::string, Product_p >& lookup() {
-		static std::unordered_map<std::string, Product_p > lookup;
-		return lookup;
-	}
-	
-	static int& idr() {static int idr = 0; return idr;}
-	
+
 	
 	Product(const std::string &productID, const std::string &title, const double &price)
-		:productID(productID),title(title),price(price),id(++(idr())){
+		:productID(productID),title(title),price(price),id(++(builder::b()->idr)){
 		generated_id = true;
-		assert(lookup().find(productID) == lookup().end());
+		assert(builder::b()->lookup.find(productID) == builder::b()->lookup.end());
 	}
 	
 	Product(int id, const std::string &productID, const std::string &title, const double &price)
 		:productID(productID),title(title),price(price),id(id) {
-		assert((!generated_id) || id > idr()); //ID collision is technically possible.
-		idr() += (id - idr() + 1);
+		assert((!generated_id) || id > builder::b()->idr); //ID collision is technically possible.
+		builder::b()->idr += (id - builder::b()->idr + 1);
 	}
 	
 	
@@ -54,8 +46,6 @@ public:
 	
 	
 	class Memo : public ::Memo<Product_pp> {
-	private:
-		static std::unordered_map<int, Product_p> & pm(){static std::unordered_map<int, Product_p> pm; return pm;}
   	public:
   		bool serialize_called = false;
   		const bool from_const = false;
@@ -73,10 +63,10 @@ public:
   		Product_pp unpack() const {
 			assert(serialize_called);
 			assert(id != -1);
-			if (pm().find(id) != pm().end()) return pm().at(id).lock();
+			if (builder::b()->pm.find(id) != builder::b()->pm.end()) return builder::b()->pm.at(id).lock();
 			Product_pp ret(new Product(id,productID, title, price));
-			lookup()[productID] = ret;
-			pm()[id] = ret;
+			builder::b()->lookup[productID] = ret;
+			builder::b()->pm[id] = ret;
 			return ret;
 		}
 
@@ -100,25 +90,35 @@ public:
 	
   	Memo_p pack() const { return Memo_p(new Memo(id,productID,title,price));}
   	Memo pod_pack() const { return Memo(id,productID,title,price);}
-	
-	static Product_pp build(const std::string &productID, const std::string &title, double price){
-		if (lookup().find(productID) != lookup().end()) return lookup().at(productID).lock();
-		Product_pp p( new Product(productID, title, price));
-		lookup()[productID] = p;
-		return p;
-	}
-	
-	static Product_pp build(const std::string &productID){
-		return lookup().at(productID).lock();
-	}
+
+
+	friend class builder;
+	class builder {
+		friend class Product;
+		static plain_ptr<builder>& b() {static plain_ptr<builder> b(nullptr); return b;}
+		std::unordered_map<std::string, Product_p > lookup;
+		int idr = 0;
+		std::unordered_map<int, Product_p> pm;
+	public:
+
+		builder(){ assert(b() == nullptr); b() = this; }
+		virtual ~builder() {b() = nullptr; std::cout << "builder done" << std::endl;}
+
+		Product_pp build(const std::string &productID, const std::string &title, double price){
+			if (lookup.find(productID) != lookup.end()) return lookup.at(productID).lock();
+			Product_pp p( new Product(productID, title, price));
+			lookup[productID] = p;
+			return p;
+		}
+		
+		Product_pp build(const std::string &productID){
+			return lookup.at(productID).lock();
+		}
+	};
 	
 	int compareTo(const Product &o) const {
 		// TODO Auto-generated method stub
 		return (this == &o) ? 0 : (id < o.id ? -1 : id == o.id ? 0 : 1);
 	}
-	
-	static void constructionDone() { lookup().clear(); Memo::pm().clear(); }
 
 };
-
-BOOST_CLASS_EXPORT_GUID(Product::Memo, "productmemo")

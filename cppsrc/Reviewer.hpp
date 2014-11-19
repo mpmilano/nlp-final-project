@@ -6,8 +6,6 @@
 #include <unordered_map>
 #include "Memoize.hpp"
 #include "StringUtils.hpp"
-#include <boost/serialization/export.hpp>
-#include <boost/serialization/access.hpp>
 
 class Review;
 
@@ -22,20 +20,9 @@ public:
 	const std::string userID;
 	const int id;
 	std::set<Review*> reviews;
-	
-private:
-	static std::unordered_map<std::string, Reviewer_p >& lookup() {
-		static std::unordered_map<std::string, Reviewer_p > lookup;
-		return lookup;
-	}
-	
-	static int& idr() {static int idr = 0; return idr;}
+
 public:	
-	class Memo : public ::Memo<Reviewer_pp > {
-		
-		static std::unordered_map<int, Reviewer_p> & rm() {
-			static std::unordered_map<int, Reviewer_p> rm; return rm; 
-		}
+	class Memo : public ::Memo<Reviewer_pp > {		
 
 		bool serialize_called = false;
 		const bool from_const = false;
@@ -44,7 +31,6 @@ public:
 		std::string userID;
 		
 		friend class Reviewer;
-		friend class boost::serialization::access;
 		Memo(int id, std::string pn,std::string u)
 			:from_const(true),id(id),profileName(pn),userID(u){}
 		
@@ -67,12 +53,12 @@ public:
 		Reviewer_pp unpack() const {
 			assert(serialize_called);
 			assert (id != -1);	
-			if (rm().find(id) != rm().end()){
-				return rm().at(id).lock();
+			if (builder::b()->rm.find(id) != builder::b()->rm.end()){
+				return builder::b()->rm.at(id).lock();
 			}
 			Reviewer_pp ret(new Reviewer(id,profileName,userID));
-			lookup()[userID] = ret;
-			rm()[id] = ret;
+			builder::b()->lookup[userID] = ret;
+			builder::b()->rm[id] = ret;
 			return ret;
 		}
 		Memo(){}
@@ -86,10 +72,10 @@ private:
 	bool generated_id = false;
 
 	Reviewer(int id, std::string profileName, std::string userID):profileName(profileName),userID(userID),id(id){
-		assert ( (!generated_id) || (id > idr()));
-		idr() += (id - idr() + 1);
+		assert ( (!generated_id) || (id > builder::b()->idr));
+		builder::b()->idr += (id - builder::b()->idr + 1);
 	}
-	Reviewer(std::string profileName, std::string userID):profileName(profileName),userID(userID),id(++(idr())){
+	Reviewer(std::string profileName, std::string userID):profileName(profileName),userID(userID),id(++(builder::b()->idr)){
 		generated_id = true;
 	}
 	
@@ -100,21 +86,30 @@ public:
 	}
 	Memo pod_pack() const { return Memo(id, profileName,userID);}
 	
-	static Reviewer_pp build(const std::string &profilename, const std::string &userid){
-		if (lookup().find(userid) != lookup().end()) return lookup().at(userid).lock();
-		Reviewer_pp p(new Reviewer(profilename, userid));
-		lookup()[userid] = p;
-		return p;
-	}
 	
 public:
+	friend class builder;
+	class builder{
+		friend class Reviewer;
+		std::unordered_map<int, Reviewer_p> rm;
+		std::unordered_map<std::string, Reviewer_p > lookup;
+		int idr = 0;
+		static plain_ptr<builder>& b() {static plain_ptr<builder> b(nullptr); return b;}
+
+	public:
+		builder(){ assert(b() == nullptr); b() = this; }
+		virtual ~builder() {b() = nullptr; std::cout << "builder done" << std::endl;}
+
+		Reviewer_pp build(const std::string &profilename, const std::string &userid){
+			if (lookup.find(userid) != lookup.end()) return lookup.at(userid).lock();
+			Reviewer_pp p(new Reviewer(profilename, userid));
+			lookup[userid] = p;
+			return p;
+		}
+	};
+
 	int compareTo(const Reviewer &o) const {
 		return id < o.id ? -1 : id == o.id ? 0 : 1; 
 	}
-
-	static void constructionDone() { lookup().clear(); Memo::rm().clear(); }
 	
 };
-
-
-BOOST_CLASS_EXPORT_GUID(Reviewer::Memo, "reviewermemo")

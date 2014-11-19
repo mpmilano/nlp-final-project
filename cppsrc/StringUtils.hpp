@@ -34,3 +34,13 @@ inline std::string strReplace (const std::string &s, char o, char n){
 	}
 	return ret;
 }
+
+template<typename T>
+struct plain_ptr {
+	T* p;
+	plain_ptr(T *t):p(t){}
+	plain_ptr operator=( T* t){return p = t;}
+	operator T* () {return p;}
+	T* operator -> (){return p;}
+
+};

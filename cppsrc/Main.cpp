@@ -12,11 +12,15 @@ using namespace std;
 int main() {
 	
 	{
+
+		Reviewer::builder rrb;
+		Product::builder pb;
+		Review::builder rb;
 		ReviewParser<ifstream>::sets s;
 		
 		vector<string> names = {
-			"Electronics.txt", 
-			"Clothing_&_Accessories.txt", 
+			//"Electronics.txt", 
+			//"Clothing_&_Accessories.txt", 
 			"Gourmet_Foods.txt",
 			"all-head.txt"
 		};
@@ -24,11 +28,8 @@ int main() {
 		std::string prefix = "/home/milano/course/nlp/data/";
 		
 		for (auto& endfix : names){
-			ReviewParser<ifstream>::parse(prefix + endfix,s);
+			ReviewParser<ifstream>::parse(prefix + endfix,rrb,pb,rb,s);
 		}
-		Product::constructionDone();
-		Review::constructionDone();
-		Reviewer::constructionDone();
 	}
 	std::cout << "done, all memory should be cleared up..." << std::endl;
 	

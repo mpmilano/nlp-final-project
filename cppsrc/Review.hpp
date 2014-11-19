@@ -4,7 +4,7 @@
 #include "Helpfulness.hpp"
 #include "Reviewer.hpp"
 #include "Product.hpp"
-#include <boost/serialization/export.hpp>
+
 
 class Review;
 typedef std::unique_ptr<Review> Review_p;
@@ -12,7 +12,6 @@ typedef std::unique_ptr<Review> Review_p;
 class Review : public Memoizeable<Review_p> {
 
 private:
-	int & idr() {static int idr = 0; return idr; }
 	int id;
 public:
 
@@ -30,7 +29,7 @@ public:
 		bool serialize_called = false;
 		const bool from_const = false;
 
-		friend class boost::serialization::access;	
+
 		int id;
 		std::string summary;
 		double score;
@@ -60,7 +59,7 @@ public:
 		Review_p unpack() const{
 			auto rr = Reviewer_pp((Reviewer::Memo(reviewer)).unpack());
 			auto pr = Product_pp((Product::Memo(product)).unpack());
-			return build(summary,score,time,rr,help,pr,text); 
+			return builder::b()->build(summary,score,time,rr,help,pr,text); 
 		}
 		
 
@@ -86,7 +85,7 @@ private:
 	       const Helpfulness& help, 
 	       const Product_pp& product, 
 	       const std::string& text):
-		id(++(idr())),
+		id(++(builder::b()->idr)),
 		summary(summary),
 		score(score),
 		time(time),
@@ -96,18 +95,31 @@ private:
 		text(text){}
 	
 public: 
-	static std::unique_ptr<Review> build(const std::string &summary,
-			    double score, 
-			    int time, 
-			    Reviewer_pp &reviewer, 
-			    const Helpfulness &help, 
-			    Product_pp &product, 
-			    const std::string &text){
-		std::unique_ptr<Review> ret(new Review(summary, score, time, reviewer, help, product, text));
-		reviewer->reviews.insert(ret.get());
-		product->reviews.insert(ret.get());
-		return ret;
-	}
+
+	friend class builder;
+	class builder{
+	private:
+		int idr = 0;
+		static plain_ptr<builder>& b() {static plain_ptr<builder> b(nullptr); return b;}
+	public:
+		friend class Review;
+		builder(){ assert(b() == nullptr); b() = this; }
+		virtual ~builder() {b() = nullptr; std::cout << "builder done" << std::endl;}
+
+
+		std::unique_ptr<Review> build(const std::string &summary,
+					      double score, 
+					      int time, 
+					      Reviewer_pp &reviewer, 
+					      const Helpfulness &help, 
+					      Product_pp &product, 
+					      const std::string &text){
+			std::unique_ptr<Review> ret(new Review(summary, score, time, reviewer, help, product, text));
+			reviewer->reviews.insert(ret.get());
+			product->reviews.insert(ret.get());
+			return ret;
+		}
+	};
 	
 	virtual ~Review(){ 
 		Product_pp p = product;
@@ -117,8 +129,7 @@ public:
 	}
 
 	//no caches to purge here!
-	static void constructionDone(){}
 	
 };
 
-BOOST_CLASS_EXPORT_GUID(Review::Memo, "reviewmemo")
+
