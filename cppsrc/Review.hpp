@@ -8,13 +8,14 @@
 #include "Product.hpp"
 
 
+
 class Review;
 typedef std::unique_ptr<Review> Review_p;
 
 class Review : public Memoizeable<Review_p> {
 
 private:
-	int id;
+	const int id;
 public:
 
 	const std::string summary;
@@ -62,7 +63,7 @@ public:
 		Review_p unpack() const{
 			auto rr = Reviewer_pp((Reviewer::Memo(reviewer)).unpack());
 			auto pr = Product_pp((Product::Memo(product)).unpack());
-			return builder::b()->build(summary,score,time,rr,help,pr,text); 
+			return builder::b()->build(id,summary,score,time,rr,help,pr,text);
 		}
 		
 
@@ -81,14 +82,15 @@ public:
 	Memo pod_pack() const {return Memo(id,summary,score,time,reviewer->pod_pack(),help,product->pod_pack(),text);}
 
 private: 
-	Review(const std::string summary, 
+	Review(int id, 
+	       const std::string summary, 
 	       double score, 
 	       int time, 
 	       const Reviewer_pp& reviewer, 
 	       const Helpfulness& help, 
 	       const Product_pp& product, 
 	       const std::string& text):
-		id(++(builder::b()->idr)),
+		id(id),
 		summary(summary),
 		score(score),
 		time(time),
@@ -109,6 +111,19 @@ public:
 		builder(){ assert(b() == nullptr); b() = this; }
 		virtual ~builder() {b() = nullptr; std::cout << "builder done" << std::endl;}
 
+		std::unique_ptr<Review> build(int id, 
+					      const std::string &summary,
+					      double score, 
+					      int time, 
+					      Reviewer_pp &reviewer, 
+					      const Helpfulness &help, 
+					      Product_pp &product, 
+					      const std::string &text){
+			std::unique_ptr<Review> ret(new Review(id,summary, score, time, reviewer, help, product, text));
+			reviewer->reviews.insert(ret.get());
+			product->reviews.insert(ret.get());
+			return ret;
+		}
 
 		std::unique_ptr<Review> build(const std::string &summary,
 					      double score, 
@@ -117,10 +132,7 @@ public:
 					      const Helpfulness &help, 
 					      Product_pp &product, 
 					      const std::string &text){
-			std::unique_ptr<Review> ret(new Review(summary, score, time, reviewer, help, product, text));
-			reviewer->reviews.insert(ret.get());
-			product->reviews.insert(ret.get());
-			return ret;
+			return build(++idr,summary,score,time,reviewer,help,product,text);
 		}
 	};
 	
