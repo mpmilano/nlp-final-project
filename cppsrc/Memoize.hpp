@@ -30,4 +30,7 @@ public:
 	
 	typedef std::unique_ptr<Memo<T> > Memo_p;
 	virtual Memo_p pack() const = 0;
+
+	virtual ~Memoizeable(){}
+
 };

@@ -12,9 +12,10 @@
 class Review;
 
 class Reviewer;
-typedef std::shared_ptr<Reviewer> Reviewer_p;
+typedef std::weak_ptr<Reviewer> Reviewer_p;
+typedef std::shared_ptr<Reviewer> Reviewer_pp;
 
-class Reviewer : public Memoizeable<std::shared_ptr<Reviewer> >{
+class Reviewer : public Memoizeable<Reviewer_pp > {
 	
 public:
 	const std::string profileName;
@@ -23,14 +24,14 @@ public:
 	std::set<Review*> reviews;
 	
 private:
-	static std::unordered_map<std::string, std::shared_ptr<Reviewer> >& lookup() {
-		static std::unordered_map<std::string, std::shared_ptr<Reviewer> > lookup;
+	static std::unordered_map<std::string, Reviewer_p >& lookup() {
+		static std::unordered_map<std::string, Reviewer_p > lookup;
 		return lookup;
 	}
 	
 	static int& idr() {static int idr = 0; return idr;}
 public:	
-	class Memo : public ::Memo<std::shared_ptr<Reviewer> > {
+	class Memo : public ::Memo<Reviewer_pp > {
 		
 		static std::unordered_map<int, Reviewer_p> & rm() {
 			static std::unordered_map<int, Reviewer_p> rm; return rm; 
@@ -63,13 +64,13 @@ public:
 		bool from_archive() const {return serialize_called && (!from_const); }
 		bool from_pack() const {return from_const;}
 
-		std::shared_ptr<Reviewer> unpack() const {
+		Reviewer_pp unpack() const {
 			assert(serialize_called);
 			assert (id != -1);	
 			if (rm().find(id) != rm().end()){
-				return rm().at(id);
+				return rm().at(id).lock();
 			}
-			Reviewer_p ret(new Reviewer(id,profileName,userID));
+			Reviewer_pp ret(new Reviewer(id,profileName,userID));
 			lookup()[userID] = ret;
 			rm()[id] = ret;
 			return ret;
@@ -99,9 +100,9 @@ public:
 	}
 	Memo pod_pack() const { return Memo(id, profileName,userID);}
 	
-	static std::shared_ptr<Reviewer> build(const std::string &profilename, const std::string &userid){
-		if (lookup().find(userid) != lookup().end()) return lookup().at(userid);
-		std::shared_ptr<Reviewer> p(new Reviewer(profilename, userid));
+	static Reviewer_pp build(const std::string &profilename, const std::string &userid){
+		if (lookup().find(userid) != lookup().end()) return lookup().at(userid).lock();
+		Reviewer_pp p(new Reviewer(profilename, userid));
 		lookup()[userid] = p;
 		return p;
 	}

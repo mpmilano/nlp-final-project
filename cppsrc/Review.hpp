@@ -19,9 +19,9 @@ public:
 	const std::string summary;
 	const double score;
 	const int time;
-	const Reviewer_p reviewer;
+	const Reviewer_pp reviewer;
 	const Helpfulness help;
-	const Product_p product;
+	const Product_pp product;
 	const std::string text;
 
   
@@ -58,8 +58,8 @@ public:
 		}
 
 		Review_p unpack() const{
-			auto rr = (Reviewer::Memo(reviewer)).unpack();
-			auto pr = (Product::Memo(product)).unpack();
+			auto rr = Reviewer_pp((Reviewer::Memo(reviewer)).unpack());
+			auto pr = Product_pp((Product::Memo(product)).unpack());
 			return build(summary,score,time,rr,help,pr,text); 
 		}
 		
@@ -82,9 +82,9 @@ private:
 	Review(const std::string summary, 
 	       double score, 
 	       int time, 
-	       const Reviewer_p& reviewer, 
+	       const Reviewer_pp& reviewer, 
 	       const Helpfulness& help, 
-	       const Product_p& product, 
+	       const Product_pp& product, 
 	       const std::string& text):
 		id(++(idr())),
 		summary(summary),
@@ -99,9 +99,9 @@ public:
 	static std::unique_ptr<Review> build(const std::string &summary,
 			    double score, 
 			    int time, 
-			    Reviewer_p &reviewer, 
+			    Reviewer_pp &reviewer, 
 			    const Helpfulness &help, 
-			    Product_p &product, 
+			    Product_pp &product, 
 			    const std::string &text){
 		std::unique_ptr<Review> ret(new Review(summary, score, time, reviewer, help, product, text));
 		reviewer->reviews.insert(ret.get());
@@ -109,10 +109,11 @@ public:
 		return ret;
 	}
 	
-	~Review(){ Product_p p = product;
-		   Reviewer_p r = reviewer;
-		   p->reviews.erase(this);
-		   r->reviews.erase(this);
+	virtual ~Review(){ 
+		Product_pp p = product;
+		Reviewer_pp r = reviewer;
+		p->reviews.erase(this);
+		r->reviews.erase(this);
 	}
 
 	//no caches to purge here!

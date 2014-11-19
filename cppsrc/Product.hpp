@@ -14,9 +14,11 @@
 class Review;
 
 class Product;
-typedef std::shared_ptr<Product> Product_p;
+typedef std::weak_ptr<Product> Product_p;
+typedef std::shared_ptr<Product> Product_pp;
 
-class Product : public Memoizeable<Product_p> {
+
+class Product : public Memoizeable<Product_pp> {
 	bool generated_id = false;
 public:
 	const std::string productID;
@@ -27,8 +29,8 @@ public:
 	
 	
 private:
-	static std::unordered_map<std::string, std::shared_ptr<Product> >& lookup() {
-		static std::unordered_map<std::string, std::shared_ptr<Product> > lookup;
+	static std::unordered_map<std::string, Product_p >& lookup() {
+		static std::unordered_map<std::string, Product_p > lookup;
 		return lookup;
 	}
 	
@@ -51,7 +53,7 @@ private:
 public: 
 	
 	
-	class Memo : public ::Memo<Product_p> {
+	class Memo : public ::Memo<Product_pp> {
 	private:
 		static std::unordered_map<int, Product_p> & pm(){static std::unordered_map<int, Product_p> pm; return pm;}
   	public:
@@ -68,11 +70,11 @@ public:
 		Memo(){}
 			Memo(int id):serialize_called(true),id(id){}
 		
-  		Product_p unpack() const {
+  		Product_pp unpack() const {
 			assert(serialize_called);
 			assert(id != -1);
-			if (pm().find(id) != pm().end()) return pm().at(id);
-			Product_p ret(new Product(id,productID, title, price));
+			if (pm().find(id) != pm().end()) return pm().at(id).lock();
+			Product_pp ret(new Product(id,productID, title, price));
 			lookup()[productID] = ret;
 			pm()[id] = ret;
 			return ret;
@@ -99,15 +101,15 @@ public:
   	Memo_p pack() const { return Memo_p(new Memo(id,productID,title,price));}
   	Memo pod_pack() const { return Memo(id,productID,title,price);}
 	
-	static std::shared_ptr<Product> build(const std::string &productID, const std::string &title, double price){
-		if (lookup().find(productID) != lookup().end()) return lookup().at(productID);
-		std::shared_ptr<Product> p( new Product(productID, title, price));
+	static Product_pp build(const std::string &productID, const std::string &title, double price){
+		if (lookup().find(productID) != lookup().end()) return lookup().at(productID).lock();
+		Product_pp p( new Product(productID, title, price));
 		lookup()[productID] = p;
 		return p;
 	}
 	
-	static Product_p build(const std::string &productID){
-		return lookup().at(productID);
+	static Product_pp build(const std::string &productID){
+		return lookup().at(productID).lock();
 	}
 	
 	int compareTo(const Product &o) const {
@@ -118,6 +120,5 @@ public:
 	static void constructionDone() { lookup().clear(); Memo::pm().clear(); }
 
 };
-typedef std::shared_ptr<Product> Product_p;
 
 BOOST_CLASS_EXPORT_GUID(Product::Memo, "productmemo")

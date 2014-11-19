@@ -15,6 +15,11 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/vector.hpp>
 
+template<typename T> 
+bool operator< (const std::weak_ptr<T> &a, const std::weak_ptr<T> &b){
+	return a.lock() < b.lock();
+}
+
 template<class Input>
 class ReviewParser {
 
@@ -74,7 +79,7 @@ public:
 		std::set<Product_p> ps;
 		std::set<Review_p> rs;
 
-		sets(std::set<Reviewer_p> rrs, 	std::set<Product_p> ps, std::set<Review_p> rs)
+		sets(std::set<Reviewer_p> rrs, std::set<Product_p> ps, std::set<Review_p> rs)
 			:rrs(rrs),ps(ps),rs(rs){}
 		sets(){}
 
@@ -126,15 +131,16 @@ public:
 			m.ps.reserve(ps.size());
 			m.rs.reserve(rs.size());
 			{ std:: cout << "sizes: " << rrs.size() << " " << ps.size() << " " << rs.size() << std::endl; }
-			for (auto &e: rrs) m.rrs.push_back(e->pod_pack());
-			for (auto &e: ps) m.ps.push_back(e->pod_pack());
+			for (auto &e: rrs) m.rrs.push_back(e.lock()->pod_pack());
+			for (auto &e: ps) m.ps.push_back(e.lock()->pod_pack());
 			for (auto &e: rs) m.rs.push_back(e->pod_pack());
 			return m;
 		}
 
-			
-	};
 
+		
+	};
+	
 private:
 
 	static bool readFromFile(const std::string &filename, sets &s) {
@@ -172,7 +178,7 @@ private:
 		
 		    std::cout << "starting parse" << std::endl;
 
-		    if (readFromFile(filename,s)) return;
+		    //if (readFromFile(filename,s)) return;
 		    
 		    sets sout;
 
@@ -206,22 +212,22 @@ private:
 			    double price = -1;
 			    try {price = std::stod(productPrice);}
 			    catch (...) {}
-			    Product_p p = Product::build(productId, productTitle, price);
-			    Reviewer_p c = Reviewer::build(reviewProfileName, reviewUserId);
+			    auto p = (Product::build(productId, productTitle, price));
+			    auto c = (Reviewer::build(reviewProfileName, reviewUserId));
 			    Helpfulness h = Helpfulness::build(std::stoi(pre_substr(reviewHelpfulness,"/")), 
 							       std::stoi(post_substr(reviewHelpfulness,"/")));
 			    auto r = Review::build(reviewSummary,std::stod(reviewScore), std::stoi(reviewTime),c,h,p,reviewText);
-			    cs.insert(c);
-			    s.rrs.insert(c);
-			    ps.insert(p);
-			    s.ps.insert(p);
+			    cs.insert(Reviewer_p(c));
+			    s.rrs.insert(Reviewer_p(c));
+			    ps.insert(Product_p(p));
+			    s.ps.insert(Product_p(p));
 			    s.rs.insert(Review_p(new Review(*r)));
 			    rs.insert(std::move(r));
 		    }
 		    
 		    std::cout << "completed parse" << std::endl;
 		    
-		    writeToFile(filename,sout);
+		    //writeToFile(filename,sout);
 		    
 		    { std::cout << "number of reviewers: " << cs.size() << std::endl; }
 	    }
