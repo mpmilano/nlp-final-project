@@ -4,6 +4,7 @@
 #include "Product.hpp"
 #include "Reviewer.hpp"
 #include "ReviewParser.hpp"
+#include "vector_assembler.hpp"
 #include <fstream>
 #include <unistd.h>
 #include <vector>
