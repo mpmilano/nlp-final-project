@@ -19,8 +19,8 @@ int main() {
 		ReviewParser<ifstream>::sets s;
 		
 		vector<string> names = {
-			//"Electronics.txt", 
-			//"Clothing_&_Accessories.txt", 
+			"Electronics.txt", 
+			"Clothing_&_Accessories.txt", 
 			"Gourmet_Foods.txt",
 			"all-head.txt"
 		};
