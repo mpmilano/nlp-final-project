@@ -5,6 +5,7 @@
 #include <memory>
 #include <unordered_map>
 #include <cassert>
+#include <boost/serialization/export.hpp>
 #include "Memoize.hpp"
 #include "StringUtils.hpp"
 #include "Review.hpp"
@@ -122,3 +123,5 @@ public:
 	}
 
 };
+
+BOOST_CLASS_EXPORT_GUID(Product::Memo, "productmemo")

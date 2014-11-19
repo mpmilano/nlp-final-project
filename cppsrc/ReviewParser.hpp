@@ -7,10 +7,14 @@
 #include <fstream>
 #include <memory>
 #include <cassert>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/serialization/vector.hpp>
 #include "Product.hpp"
 #include "Reviewer.hpp"
 #include "Review.hpp"
 #include "Helpfulness.hpp"
+
 
 template<typename T> 
 bool operator< (const std::weak_ptr<T> &a, const std::weak_ptr<T> &b){
@@ -83,6 +87,7 @@ public:
 
 		struct Memo : public ::Memo<sets> {
 
+			friend class boost::serialization::access;
 			std::vector<Reviewer::Memo> rrs;
 			std::vector<Product::Memo> ps;
 			std::vector<Review::Memo> rs;
@@ -145,7 +150,7 @@ private:
 		std::string cachefile = "/tmp/rc/" + strReplace(filename,'/','%');
 		std::ifstream ifs(cachefile, std::ios::binary | std::ios_base::in);
 		if (! ifs.good()) return false;
-		/*{
+		{
 			std::cout << "file good - proceeding!" << std::endl;
 			boost::archive::binary_iarchive ia(ifs);
 			typename sets::Memo m;
@@ -159,7 +164,7 @@ private:
 	void writeToFile(const std::string& filename, sets &s) {
 	  	std::string cachefile = "/tmp/rc/" + strReplace(filename,'/','%');
 		std::ofstream ofs(cachefile, std::ios::binary | std::ios_base::out);
-		/*{
+		{
 			boost::archive::binary_oarchive oa(ofs);
 			auto t = s.pod_pack();
 			oa << t;

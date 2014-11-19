@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 #include <memory>
+#include <boost/serialization/export.hpp>
+#include <boost/serialization/access.hpp>
 #include "Helpfulness.hpp"
 #include "Reviewer.hpp"
 #include "Product.hpp"
@@ -29,6 +31,7 @@ public:
 		bool serialize_called = false;
 		const bool from_const = false;
 
+		friend class boost::serialization::access; 
 
 		int id;
 		std::string summary;
@@ -133,3 +136,4 @@ public:
 };
 
 
+BOOST_CLASS_EXPORT_GUID(Review::Memo, "reviewmemo")

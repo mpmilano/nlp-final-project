@@ -3,6 +3,8 @@
 #include <memory>
 #include "Product.hpp"
 #include <set>
+#include <boost/serialization/export.hpp>
+#include <boost/serialization/access.hpp>
 #include <unordered_map>
 #include "Memoize.hpp"
 #include "StringUtils.hpp"
@@ -31,6 +33,7 @@ public:
 		std::string userID;
 		
 		friend class Reviewer;
+		friend class boost::serialization::access;
 		Memo(int id, std::string pn,std::string u)
 			:from_const(true),id(id),profileName(pn),userID(u){}
 		
@@ -113,3 +116,5 @@ public:
 	}
 	
 };
+
+BOOST_CLASS_EXPORT_GUID(Reviewer::Memo, "reviewermemo")
