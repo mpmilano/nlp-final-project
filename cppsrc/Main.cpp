@@ -82,8 +82,17 @@ int main() {
 			for (auto &v : *vec1){
 				v1fo << v.second << std::endl;
 			}
+			v1fo.close();
+		}
+		{
+
+			std::ofstream v2fo("/home/milano/course/nlp/vec2-funny");
+
+			for (auto &v : *vec2){
+				v2fo << *(v.second) << std::endl;
+			}
 			
-		v1fo.close();
+			v2fo.close();
 		}
 		frevs = funny_reviews.size();
 		for (auto &r : funny_reviews){
