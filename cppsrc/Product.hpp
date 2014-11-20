@@ -23,7 +23,7 @@ public:
 	const std::string productID;
 	const std::string title;
 	const double price;
-	std::set<Review*> reviews;
+	std::set<Review_p> reviews;
 	const smart_int id;
 	
 	
@@ -39,7 +39,7 @@ private:
 	Product(smart_int id, const std::string &productID, const std::string &title, const double &price)
 		:productID(productID),title(title),price(price),id(id) {
 		assert((!generated_id) || id > builder::b()->idr); //ID collision is technically possible.
-		builder::b()->idr += (id - builder::b()->idr + 1);
+		builder::b()->idr = (id + 1);
 	}
 	
 	

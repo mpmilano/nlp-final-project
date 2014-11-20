@@ -21,7 +21,7 @@ public:
 	const std::string profileName;
 	const std::string userID;
 	const smart_int id;
-	std::set<Review*> reviews;
+	std::set<Review_p> reviews;
 
 public:	
 	class Memo : public ::Memo<Reviewer_pp > {		
@@ -76,7 +76,7 @@ private:
 
 	Reviewer(smart_int id, std::string profileName, std::string userID):profileName(profileName),userID(userID),id(id){
 		assert ( (!generated_id) || (id > builder::b()->idr));
-		builder::b()->idr += (id - builder::b()->idr + 1);
+		builder::b()->idr = (id +1);
 	}
 	Reviewer(std::string profileName, std::string userID):profileName(profileName),userID(userID),id(++(builder::b()->idr)){
 		generated_id = true;

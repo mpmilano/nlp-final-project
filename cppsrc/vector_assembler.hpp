@@ -96,15 +96,48 @@ struct FirstVector{
 		numsent(numsent),
 		percent_smallword_CAPS(percent_smallword_CAPS), 
 		percent_bigword_CAPS(percent_bigword_CAPS){}
+
+	friend std::ostream& operator<<(std::ostream&, const FirstVector& );
 		
 };
 
+std::ostream& operator<<(std::ostream& os, const FirstVector& h){
+
+	return (os << "<" << h.commas_char << "," <<
+		h.commas_word << "," <<
+		h.commas_sentence << "," << 
+		h.periods_chars << "," << 
+		h.periods_word << "," << 
+		h.periods_sentence << "," << 
+		h.quotes_chars << "," << 
+		h.quotes_word << "," << 
+		h.quotes_sentence << "," << 
+		h.apostrophe_chars << "," << 
+		h.apostrophe_word << "," << 
+		h.apostrophe_sentence << "," << 
+		h.ellipse_chars << "," << 
+		h.ellipse_word << "," << 
+		h.ellipse_sentence << "," << 
+		h.numchars << "," << 
+		h.numwords << "," << 
+		h.numsent << "," << 
+		h.percent_smallword_CAPS  << "," << 
+		h.percent_bigword_CAPS << ">");
+
+}
+
 typedef std::map<const std::string* const, int> SecondVector_np;
+
+
 typedef std::unique_ptr<const SecondVector_np > SecondVector_nc;
 typedef SecondVector_nc SecondVector;
 
-typedef std::unordered_map<Review*, SecondVector> VecMap2;
+typedef std::unordered_map<Review_p, SecondVector> VecMap2;
 typedef std::unique_ptr<VecMap2 > VecMap2_p;
+
+std::ostream& operator<<(std::ostream& os, const SecondVector_np& ){
+	return os;
+}
 
 SecondVector word_counts(std::set<std::string> &words, const std::string &s){
 	auto retp = new SecondVector_np();
@@ -122,7 +155,7 @@ SecondVector word_counts(std::set<std::string> &words, const std::string &s){
 	return std::move(ret);
 }
 
-typedef std::unordered_map<Review*, FirstVector> VecMap1;
+typedef std::unordered_map<Review_p, FirstVector> VecMap1;
 typedef std::unique_ptr<VecMap1 > VecMap1_p;
 
 typedef std::set<std::string> wordset;
@@ -184,7 +217,8 @@ bool isthree(int x) { return x == 3; }
 bool gtone(int x) {return x > 1; }
 bool gtz(int x) {return x > 0; }
 
-vec_tuple populate_vecs(const std::set<Review_p> &s){
+template<typename T> 
+vec_tuple populate_vecs(const T &s){
 	VecMap1_p rret(new VecMap1());
 	auto& map = *rret;
 	VecMap2_p rret2(new VecMap2());
@@ -216,29 +250,29 @@ vec_tuple populate_vecs(const std::set<Review_p> &s){
 		auto capsp = capscount(rtext);
 		auto num2caps = capsp.first;
 		auto num3caps = capsp.second;
-
-		map.emplace(rp.get(),FirstVector(countres[','].second / numchars,
-						 countres[','].second / numwords,
-						 countres[','].second / numsent,
-						 countres['.'].second / numchars,
-						 countres['.'].second / numwords,
-						 countres['.'].second / numsent,
-						 countres['"'].second / numchars,
-						 countres['"'].second / numwords,
-						 countres['"'].second / numsent,
-						 countres['\''].second / numchars,
-						 countres['\''].second / numwords,
-						 countres['\''].second / numsent,
-						 numellipse / numchars,
-						 numellipse / numwords,
-						 numellipse / numsent,
-						 numchars,
-						 numwords,
-						 numsent,
-						 num2caps / numwords,
-						 num3caps / numwords
+		
+		map.emplace(rp,FirstVector(((double) countres[','].second) / numchars,
+					   ((double) countres[','].second) / numwords,
+					   ((double) countres[','].second) / numsent,
+					   ((double) countres['.'].second) / numchars,
+					   ((double) countres['.'].second) / numwords,
+					   ((double) countres['.'].second) / numsent,
+					   ((double) countres['"'].second) / numchars,
+					   ((double) countres['"'].second) / numwords,
+					   ((double) countres['"'].second) / numsent,
+					   ((double) countres['\''].second) / numchars,
+					   ((double) countres['\''].second) / numwords,
+					   ((double) countres['\''].second) / numsent,
+					   ((double) numellipse) / numchars,
+					   ((double) numellipse) / numwords,
+					   ((double) numellipse) / numsent,
+					   ((double) numchars),
+					   numwords,
+					   numsent,
+					   ((double) num2caps) / numwords,
+					   ((double) num3caps) / numwords
 				    ));
-		map2.emplace(rp.get(),std::move(word_counts(words,rtext)));
+		map2.emplace(rp,std::move(word_counts(words,rtext)));
 	}
 
 	return std::make_tuple(std::move(rret),std::move(rret2),std::move(rwords));

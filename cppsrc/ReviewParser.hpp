@@ -78,9 +78,9 @@ public:
 	struct sets {
 		std::set<Reviewer_p> rrs;
 		std::set<Product_p> ps;
-		std::set<Review_p> rs;
+		std::set<Review_pp> rs;
 
-		sets(std::set<Reviewer_p> rrs, std::set<Product_p> ps, std::set<Review_p> rs)
+		sets(std::set<Reviewer_p> rrs, std::set<Product_p> ps, std::set<Review_pp> rs)
 			:rrs(rrs),ps(ps),rs(rs){}
 		sets(){}
 
@@ -188,7 +188,7 @@ private:
 
 		    std::set<Reviewer_p> &cs = sout.rrs;
 		    std::set<Product_p> &ps = sout.ps;
-		    std::set<Review_p> &rs = sout.rs;
+		    std::set<Review_pp> &rs = sout.rs;
 		    
 		    int count = 0;
 
@@ -223,7 +223,7 @@ private:
 			    s.rrs.insert(Reviewer_p(c));
 			    ps.insert(Product_p(p));
 			    s.ps.insert(Product_p(p));
-			    s.rs.insert(Review_p(new Review(*r)));
+			    s.rs.insert(Review_pp(new Review(*r)));
 			    rs.insert(std::move(r));
 		    }
 		    

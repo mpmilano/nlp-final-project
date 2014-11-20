@@ -10,11 +10,12 @@
 
 
 class Review;
-typedef std::unique_ptr<Review> Review_p;
+typedef std::shared_ptr<Review> Review_pp;
 
-class Review : public Memoizeable<Review_p> {
+class Review : public Memoizeable<Review_pp> {
 
 private:
+	Review_p self;
 	const smart_int id;
 public:
 
@@ -28,7 +29,7 @@ public:
 
 	friend std::ostream& operator<<(std::ostream&, const Review& );
 
-	class Memo : public ::Memo<Review_p> {
+	class Memo : public ::Memo<Review_pp> {
 
 		bool serialize_called = false;
 		const bool from_const = false;
@@ -61,7 +62,7 @@ public:
 			return id < o.id;
 		}
 
-		Review_p unpack() const{
+		Review_pp unpack() const{
 			auto rr = Reviewer_pp((Reviewer::Memo(reviewer)).unpack());
 			auto pr = Product_pp((Product::Memo(product)).unpack());
 			return builder::b()->build(id,summary,score,time,rr,help,pr,text);
@@ -83,7 +84,7 @@ public:
 	Memo pod_pack() const {return Memo(id,summary,score,time,reviewer->pod_pack(),help,product->pod_pack(),text);}
 
 private: 
-	Review(smart_int id, 
+	Review(	smart_int id, 
 	       const std::string summary, 
 	       double score, 
 	       int time, 
@@ -112,7 +113,7 @@ public:
 		builder():idr(0){ assert(b() == nullptr); b() = this; }
 		virtual ~builder() {b() = nullptr; std::cout << "builder done" << std::endl;}
 
-		std::unique_ptr<Review> build(smart_int id, 
+		Review_pp build(smart_int id, 
 					      const std::string &summary,
 					      double score, 
 					      int time, 
@@ -120,13 +121,14 @@ public:
 					      const Helpfulness &help, 
 					      Product_pp &product, 
 					      const std::string &text){
-			std::unique_ptr<Review> ret(new Review(id,summary, score, time, reviewer, help, product, text));
-			reviewer->reviews.insert(ret.get());
-			product->reviews.insert(ret.get());
+			Review_pp ret(new Review(id,summary, score, time, reviewer, help, product, text));
+			ret->self = ret;
+			reviewer->reviews.insert(ret);
+			product->reviews.insert(ret);
 			return ret;
 		}
 
-		std::unique_ptr<Review> build(const std::string &summary,
+		Review_pp build(const std::string &summary,
 					      double score, 
 					      int time, 
 					      Reviewer_pp &reviewer, 
@@ -140,8 +142,8 @@ public:
 	virtual ~Review(){ 
 		Product_pp p = product;
 		Reviewer_pp r = reviewer;
-		p->reviews.erase(this);
-		r->reviews.erase(this);
+		p->reviews.erase(self);
+		r->reviews.erase(self);
 	}
 
 	//no caches to purge here!

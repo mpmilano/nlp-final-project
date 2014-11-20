@@ -3,6 +3,9 @@
 #include <iostream>
 #include <math.h>
 
+class Review;
+typedef std::weak_ptr<Review> Review_p;
+
 inline bool strEndsWith(const std::string &s, const std::string &end){
 	return s.find(end) + end.length() == s.length();
 }
@@ -77,14 +80,18 @@ struct smart_int {
 	}
 
 	auto operator-(const smart_int &o) const{
-		if (*this > o) return i - o.i; 
+		if (i >= o.i) return i - o.i; 
 		assert(safe_add(i,-1 * o.i));
 		return i - o.i;
 	}
 
-	auto operator+=(const smart_int& o){
-		assert(safe_add(i,o.i));
-		return i += o.i;
+	auto operator=(const smart_int& o){
+		return i = o.i;
+	}
+
+	auto operator+(int o){ 
+		assert(safe_add(i,o));
+		return i + o;
 	}
 
 	auto operator!=(const smart_int &o) const {
@@ -100,6 +107,7 @@ struct smart_int {
 		return i != t;
 	}
 };
+
 namespace std {
 	template <>
 	struct hash<smart_int>
@@ -109,5 +117,19 @@ namespace std {
 				return std::hash<smart_int::t>().operator()(i.i);
 			}
 	};
-	
+
+	template <typename T>
+	struct hash<std::weak_ptr<T> >
+	{
+		std::size_t operator()(const std::weak_ptr<T>& i) const
+			{
+				return std::hash<std::shared_ptr<T> >().operator()(i.lock());
+			}
+	};
+
+}
+
+template<typename T>
+bool operator==(const std::weak_ptr<T> &a, const std::weak_ptr<T> &b){
+	return a.lock() == b.lock();
 }
