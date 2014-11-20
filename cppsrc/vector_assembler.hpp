@@ -6,6 +6,7 @@
 #include <map>
 #include <set>
 #include <sstream>
+#include <functional>
 
 template<typename T>
 constexpr std::pair<bool,T> any_matches(const T& t){
@@ -143,7 +144,7 @@ std::ostream& pv2(std::ostream& os, const SecondVector_np &v ){
 	os << "<";
 	for (auto &w : *(v.second)){
 		if (cnt != 0) os << ",";
-		os << w << ": " << v.first.at(&w);
+		os << w << ": " << ((v.first.find(&w) != v.first.end() ) ? v.first.at(&w) : 0);
 		++cnt;
 	}
 	os << ">";
@@ -154,13 +155,42 @@ std::ostream& operator<<(std::ostream& os, const SecondVector_np &v )
 { return pv2(os,v); }
 
 SecondVector word_counts(wordset *words, const std::string &s){
+
+	std::function<bool (std::istringstream &i, std::string &w)> getNextWord;
+
+	std::string wordbuffer = "";
+	
+	auto gnw = [&](std::istringstream &i, std::string &w){
+		if (wordbuffer == "") {
+			if (i >> wordbuffer) return getNextWord(i,w);
+			else return false;
+		}
+		w.clear();
+		int cnt = 0;
+		for (auto c : wordbuffer){
+			if ( (!isalnum(c)) && (w == "")) continue;
+			else if (!isalnum(c)) {
+				wordbuffer = wordbuffer.substr(cnt);
+				return true;
+			}
+			else w.push_back(c);
+			++cnt;
+		}
+		wordbuffer.clear();
+		if (w != "") return true;
+		else return getNextWord(i,w);
+	};
+	getNextWord = gnw;
+	
+
+	
 	auto retp = new SecondVector_np();
 	retp->second = words;
 	SecondVector_nc ret(retp);
 	auto &map = retp->first;
 	std::istringstream i(s);
 	std::string w;
-	while (i >> w){
+	while (getNextWord(i,w)){
 		words->insert(w);
 		auto *word = &(*(words->find(w)));
 		{ ++(map[word]);
@@ -194,23 +224,22 @@ int count_repeats(const std::list<int> &l){
 	return numreps;
 }
 
-auto count_caps(const std::string &s){
-	std::list<std::string> ret;
-	std::string acc = "";
-	for (auto &c : s){
-		if (isupper(c)){
-			acc += c;
-		}
-		else if (isspace(c)){
-			if (acc != "") ret.push_back(acc);
-			acc = "";
-		}
-		else acc = "";
-	}
-	return ret;
-}
-
 std::pair<int,int> capscount(const std::string &s){
+	auto count_caps = [](const std::string &s){
+		std::list<std::string> ret;
+		std::string acc = "";
+		for (auto &c : s){
+			if (isupper(c)){
+				acc += c;
+			}
+			else if (!isalnum(c)){
+				if (acc != "") ret.push_back(acc);
+				acc = "";
+			}
+			else acc = "";
+		}
+		return ret;
+	};
 	auto l = count_caps(s);
 	int cnt3 = 0;
 	int cnt2 = 0;
