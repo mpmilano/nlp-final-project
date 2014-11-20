@@ -29,11 +29,11 @@ int main() {
 			"Electronics.txt", 
 			"Clothing_&_Accessories.txt", 
 			"Gourmet_Foods.txt", //*/
-			"all-head.txt" ,
+			"all-head.txt" , 
 			"Home_&_Kitchen.txt" ,
 			"Video_Games.txt",
-			"Baby.txt",
-			"Automotive.txt"//*/
+			"Baby.txt",//*/
+			"Automotive.txt"
 		};
 		
 		std::string prefix = "/home/milano/course/nlp/data/";
@@ -104,9 +104,9 @@ int main() {
 		std::set<Review_pp> normal_reviews;
 		{
 			int count = 0;
-			for (auto &e : s.rs) {
+			for (auto &e : s.ps) {
 				++count;
-				normal_reviews.insert(e);
+				normal_reviews.insert(e.lock()->reviews.begin()->lock());
 				if (count == frevs ) break;
 			}
 		}
@@ -117,7 +117,7 @@ int main() {
 		VecMap1_p vec1n;
 		auto vecs = populate_vecs(normal_reviews);
 		vec1n = std::move(std::get<0>(vecs));
-		
+		auto vec2n = std::move(std::get<1>(vecs));
 		
 		{
 			std::ofstream v1fo("/home/milano/course/nlp/vec1-normal");
@@ -127,6 +127,16 @@ int main() {
 			}
 			
 			v1fo.close();
+		}
+		{
+
+			std::ofstream v2fo("/home/milano/course/nlp/vec2-normal");
+
+			for (auto &v : *vec2n){
+				v2fo << *(v.second) << std::endl;
+			}
+			
+			v2fo.close();
 		}
 	}
 }
