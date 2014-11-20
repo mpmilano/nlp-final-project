@@ -22,7 +22,7 @@ int main() {
 		Review::builder rb;
 		
 		vector<string> names = {
-/*			"Sports_&_Outdoors.txt",
+			"Sports_&_Outdoors.txt",
 			"Tools_&_Home_Improvement.txt",
 			"Toys_&_Games.txt",
 			"Health.txt",
@@ -30,7 +30,7 @@ int main() {
 			"Clothing_&_Accessories.txt", 
 			"Gourmet_Foods.txt", //*/
 			"all-head.txt" ,
-			"Home_&_Kitchen.txt" /*,
+			"Home_&_Kitchen.txt" ,
 			"Video_Games.txt",
 			"Baby.txt",
 			"Automotive.txt"//*/

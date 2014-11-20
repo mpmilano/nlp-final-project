@@ -10,9 +10,11 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/vector.hpp>
-#include "Product.hpp"
-#include "Reviewer.hpp"
+#include "Product_Memo.hpp"
+#include "Reviewer_Memo.hpp"
 #include "Review.hpp"
+#include "Review_Memo.hpp"
+#include "Review_builder.hpp"
 #include "Helpfulness.hpp"
 
 
