@@ -99,22 +99,25 @@ struct FirstVector{
 		
 };
 
-typedef std::map<const std::string, int> SecondVector_np;
+typedef std::map<const std::string* const, int> SecondVector_np;
 typedef std::unique_ptr<const SecondVector_np > SecondVector_nc;
 typedef SecondVector_nc SecondVector;
 
 typedef std::unordered_map<Review*, SecondVector> VecMap2;
 typedef std::unique_ptr<VecMap2 > VecMap2_p;
 
-SecondVector word_counts(const std::string &s){
+SecondVector word_counts(std::set<std::string> &words, const std::string &s){
 	auto retp = new SecondVector_np();
 	SecondVector_nc ret(retp);
 	auto &map = *retp;
 	std::istringstream i(s);
-	std::string word;
-	while (i >> word){
-		++(map[word]);
-		word.clear();
+	std::string w;
+	while (i >> w){
+		words.insert(w);
+		auto *word = &(*(words.find(w)));
+		{ ++(map[word]);
+			w.clear();
+		}
 	}
 	return std::move(ret);
 }
@@ -122,20 +125,24 @@ SecondVector word_counts(const std::string &s){
 typedef std::unordered_map<Review*, FirstVector> VecMap1;
 typedef std::unique_ptr<VecMap1 > VecMap1_p;
 
-typedef std::pair<VecMap1_p,VecMap2_p> vecpair;
+typedef std::set<std::string> wordset;
+typedef std::unique_ptr<std::set<std::string > > wordset_p;
+
+typedef std::tuple<VecMap1_p,VecMap2_p, wordset_p > vec_tuple;
 
 typedef bool (*pf) (int);
 
 template<pf op>
 int count_repeats(const std::list<int> &l){
-	int rcounter = 0;
+	if (l.size() == 0) return 0;
+	int rcounter = 1;
 	int prevnum = 0;
 	int numreps = 0;
 	for (auto &e : l) {
 		if (prevnum + 1 == e) ++rcounter;
 		else {
 			if (op(rcounter) ) ++numreps;
-			rcounter = 0;
+			rcounter = 1;
 		}
 	}
 	return numreps;
@@ -175,27 +182,41 @@ std::pair<int,int> capscount(const std::string &s){
 bool isone(int x) { return x == 1; }
 bool isthree(int x) { return x == 3; }
 bool gtone(int x) {return x > 1; }
+bool gtz(int x) {return x > 0; }
 
-vecpair populate_vecs(const std::set<Review_p> &s){
+vec_tuple populate_vecs(const std::set<Review_p> &s){
 	VecMap1_p rret(new VecMap1());
 	auto& map = *rret;
 	VecMap2_p rret2(new VecMap2());
 	auto& map2 = *rret2;
+	wordset_p rwords(new wordset());
+	auto& words = *rwords;
 
 	for (auto &rp : s){
 		
 		const auto &rtext = rp->text;
-		auto countres = count_chars<',','.','"','\'',' '>(rtext);
+		auto countres = count_chars<',','.','"','\'',' ','?','!'>(rtext);
 		auto numchars = rtext.size();
 		auto numellipse = count_repeats<isthree>(countres['.'].first);
-		auto numwords = count_repeats<gtone >(countres[' '].first);
+		auto numwords = 1 + count_repeats<gtz >(countres[' '].first);
 		//this is a rough estimate
 		auto numsent = count_repeats<isone>(countres['.'].first) +
-				count_repeats<gtone>(countres['!'].first) +
-				count_repeats<gtone>(countres['?'].first);
+				count_repeats<gtz>(countres['!'].first) +
+				count_repeats<gtz>(countres['?'].first) + 1;
+		{
+			if (numwords == 0 || numsent == 0) {
+				std::cout << *rp << std::endl;
+				std::cout << countres['!'].first.size() << std::endl;
+			}
+			assert(numchars != 0);
+			assert (numwords != 0);
+			assert(numsent > 0);
+		}
+
 		auto capsp = capscount(rtext);
 		auto num2caps = capsp.first;
 		auto num3caps = capsp.second;
+
 		map.emplace(rp.get(),FirstVector(countres[','].second / numchars,
 						 countres[','].second / numwords,
 						 countres[','].second / numsent,
@@ -217,8 +238,8 @@ vecpair populate_vecs(const std::set<Review_p> &s){
 						 num2caps / numwords,
 						 num3caps / numwords
 				    ));
-		map2.emplace(rp.get(),std::move(word_counts(rtext)));
+		map2.emplace(rp.get(),std::move(word_counts(words,rtext)));
 	}
 
-	return std::make_pair(std::move(rret),std::move(rret2));
+	return std::make_tuple(std::move(rret),std::move(rret2),std::move(rwords));
 }

@@ -15,7 +15,7 @@ typedef std::unique_ptr<Review> Review_p;
 class Review : public Memoizeable<Review_p> {
 
 private:
-	const int id;
+	const smart_int id;
 public:
 
 	const std::string summary;
@@ -26,7 +26,8 @@ public:
 	const Product_pp product;
 	const std::string text;
 
-  
+	friend std::ostream& operator<<(std::ostream&, const Review& );
+
 	class Memo : public ::Memo<Review_p> {
 
 		bool serialize_called = false;
@@ -34,13 +35,13 @@ public:
 
 		friend class boost::serialization::access; 
 
-		int id;
+		smart_int id;
 		std::string summary;
-		double score;
+		Score score;
 		int time;
-		int reviewer;
+		smart_int reviewer;
 		Helpfulness help;
-		int product;
+		smart_int product;
 		std::string text;
 	
 		template<class Archive>
@@ -67,10 +68,10 @@ public:
 		}
 		
 
-		Memo(int id, std::string s, double sc, int t, Reviewer::Memo r, Helpfulness h, Product::Memo p, std::string tx)
+		Memo(smart_int id, std::string s, double sc, int t, Reviewer::Memo r, Helpfulness h, Product::Memo p, std::string tx)
 			:from_const(true),
-			 id(id),summary(s),score(sc),time(t),reviewer(r.gid()),help(h),product(p.gid()),text(tx){}
-		Memo(){}
+			 id(id),summary(s),score(sc),time(t),reviewer(r.id),help(h),product(p.id),text(tx){}
+		Memo():id(-1),reviewer(-1),product(-1){}
 
 		bool from_archive() const {return serialize_called && (!from_const); }
 		bool from_pack() const {return from_const;}
@@ -82,7 +83,7 @@ public:
 	Memo pod_pack() const {return Memo(id,summary,score,time,reviewer->pod_pack(),help,product->pod_pack(),text);}
 
 private: 
-	Review(int id, 
+	Review(smart_int id, 
 	       const std::string summary, 
 	       double score, 
 	       int time, 
@@ -99,19 +100,19 @@ private:
 		product(product),
 		text(text){}
 	
-public: 
+public:
 
 	friend class builder;
 	class builder{
 	private:
-		int idr = 0;
+		smart_int idr;
 		static plain_ptr<builder>& b() {static plain_ptr<builder> b(nullptr); return b;}
 	public:
 		friend class Review;
-		builder(){ assert(b() == nullptr); b() = this; }
+		builder():idr(0){ assert(b() == nullptr); b() = this; }
 		virtual ~builder() {b() = nullptr; std::cout << "builder done" << std::endl;}
 
-		std::unique_ptr<Review> build(int id, 
+		std::unique_ptr<Review> build(smart_int id, 
 					      const std::string &summary,
 					      double score, 
 					      int time, 
@@ -146,6 +147,19 @@ public:
 	//no caches to purge here!
 	
 };
+
+
+std::ostream& operator<<(std::ostream& os, const Review& r){
+	os << "Title : " << r.summary << std::endl;
+	os << "Score : " << r.score << std::endl;
+	os << "Time : " << r.time << std::endl;
+	os << "Reviewer : " << r.reviewer->profileName << std::endl;
+	os << "Helpfulness : " << r.help << std::endl;
+	os << "Product : " << r.product->title << std::endl;
+	os << "Review : " << r.text << std::endl;
+	return os;
+}
+
 
 
 BOOST_CLASS_EXPORT_GUID(Review::Memo, "reviewmemo")

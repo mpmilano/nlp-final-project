@@ -22,4 +22,37 @@ public:
 		return this->first < h.first ? true 
 				     : this->second < h.second;
 	}
+
+	friend std::ostream& operator<<(std::ostream&, const Helpfulness& );
 };
+
+std::ostream& operator<<(std::ostream& os, const Helpfulness& h){
+
+	return (os << h.first << "/" << h.second);
+
+}
+
+class Score {
+
+private:
+	int s;
+
+public:
+	Score(int s):s(s*10){}
+	Score(double s):s(s*10){}
+	Score():s(0){}
+	operator double() const {return s/10;}
+	operator int() const {return s/10;}
+	friend std::ostream& operator<<(std::ostream&, const Score& );
+
+	template<typename Archive>
+	void serialize(Archive &a, const unsigned int ){
+		a & s;
+	}
+	
+};
+
+std::ostream& operator<<(std::ostream& os, const Score& s){
+	double d = s;
+	return (os << d);
+}

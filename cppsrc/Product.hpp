@@ -24,7 +24,7 @@ public:
 	const std::string title;
 	const double price;
 	std::set<Review*> reviews;
-	const int id;
+	const smart_int id;
 	
 	
 private:
@@ -36,7 +36,7 @@ private:
 		assert(builder::b()->lookup.find(productID) == builder::b()->lookup.end());
 	}
 	
-	Product(int id, const std::string &productID, const std::string &title, const double &price)
+	Product(smart_int id, const std::string &productID, const std::string &title, const double &price)
 		:productID(productID),title(title),price(price),id(id) {
 		assert((!generated_id) || id > builder::b()->idr); //ID collision is technically possible.
 		builder::b()->idr += (id - builder::b()->idr + 1);
@@ -50,16 +50,15 @@ public:
   	public:
   		bool serialize_called = false;
   		const bool from_const = false;
-  		int id = -1;
-  		int gid() {return id;}
+  		smart_int id = -1;
   		std::string productID;
   		std::string title;
   		double price;
   		friend class Product;
-  		Memo(int id, std::string p, std::string t, double pr)
+  		Memo(smart_int id, std::string p, std::string t, double pr)
 			:from_const(true),id(id),productID(p),title(t),price(pr){}
 		Memo(){}
-			Memo(int id):serialize_called(true),id(id){}
+			Memo(smart_int id):serialize_called(true),id(id){}
 		
   		Product_pp unpack() const {
 			assert(serialize_called);
@@ -98,11 +97,11 @@ public:
 		friend class Product;
 		static plain_ptr<builder>& b() {static plain_ptr<builder> b(nullptr); return b;}
 		std::unordered_map<std::string, Product_pp > lookup;
-		int idr = 0;
-		std::unordered_map<int, Product_pp> pm;
+		smart_int idr;
+		std::unordered_map<smart_int, Product_pp> pm;
 	public:
 
-		builder(){ assert(b() == nullptr); b() = this; }
+		builder():idr(0){ assert(b() == nullptr); b() = this; }
 		virtual ~builder() {b() = nullptr; std::cout << "builder done" << std::endl;}
 
 		Product_pp build(const std::string &productID, const std::string &title, double price){
@@ -114,6 +113,10 @@ public:
 		
 		Product_pp build(const std::string &productID){
 			return lookup.at(productID);
+		}
+
+		auto interned(const std::string &productID){
+			return lookup.find(productID) != lookup.end();
 		}
 	};
 	

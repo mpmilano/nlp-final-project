@@ -20,7 +20,7 @@ class Reviewer : public Memoizeable<Reviewer_pp > {
 public:
 	const std::string profileName;
 	const std::string userID;
-	const int id;
+	const smart_int id;
 	std::set<Review*> reviews;
 
 public:	
@@ -28,14 +28,13 @@ public:
 
 		bool serialize_called = false;
 		const bool from_const = false;
-		int id = -1;
 	    	std::string profileName;
 		std::string userID;
 		
 		friend class Reviewer;
 		friend class boost::serialization::access;
-		Memo(int id, std::string pn,std::string u)
-			:from_const(true),id(id),profileName(pn),userID(u){}
+		Memo(smart_int id, std::string pn,std::string u)
+			:from_const(true),profileName(pn),userID(u),id(id){}
 		
 		template<class Archive>
 		void serialize(Archive &ar, const unsigned int /*version*/) {
@@ -46,7 +45,8 @@ public:
 			serialize_called = true;
 		}
 	public:
-		int gid() { return id;}
+
+		smart_int id;
 
 		bool operator<(const Memo &o) const {return id < o.id; }
 
@@ -64,9 +64,9 @@ public:
 			builder::b()->rm[id] = ret;
 			return ret;
 		}
-		Memo(){}
+		Memo():id(-1){}
 
-		Memo(int id):serialize_called(true),id(id){}
+		Memo(smart_int id):serialize_called(true),id(id){}
 		
 	};
 	
@@ -74,7 +74,7 @@ private:
 
 	bool generated_id = false;
 
-	Reviewer(int id, std::string profileName, std::string userID):profileName(profileName),userID(userID),id(id){
+	Reviewer(smart_int id, std::string profileName, std::string userID):profileName(profileName),userID(userID),id(id){
 		assert ( (!generated_id) || (id > builder::b()->idr));
 		builder::b()->idr += (id - builder::b()->idr + 1);
 	}
@@ -94,13 +94,13 @@ public:
 	friend class builder;
 	class builder{
 		friend class Reviewer;
-		std::unordered_map<int, Reviewer_pp> rm;
+		std::unordered_map<smart_int, Reviewer_pp> rm;
 		std::unordered_map<std::string, Reviewer_pp > lookup;
-		int idr = 0;
+		smart_int idr;
 		static plain_ptr<builder>& b() {static plain_ptr<builder> b(nullptr); return b;}
 
 	public:
-		builder(){ assert(b() == nullptr); b() = this; }
+		builder():idr(0){ assert(b() == nullptr); b() = this; }
 		virtual ~builder() {b() = nullptr; std::cout << "builder done" << std::endl;}
 
 		Reviewer_pp build(const std::string &profilename, const std::string &userid){
