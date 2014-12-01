@@ -19,9 +19,13 @@ public:
 	}
 
 	bool operator<(const Helpfulness& h) const {
-		return this->first < h.first ? true 
-				     : this->second < h.second;
+		return ( ((double) h.first) / h.second) - (((double) this->first) / this->second) > .001  ? true
+			: ( ((double) this->first) / this->second) - (((double) h.first) / h.second) > .001 ? false
+			: this->first < h.first ? true 
+					: this->second < h.second;
 	}
+
+	operator double() const { return ((double )votes()) / total();}
 
 	friend std::ostream& operator<<(std::ostream&, const Helpfulness& );
 };

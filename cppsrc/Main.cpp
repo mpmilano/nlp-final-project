@@ -15,13 +15,15 @@ int main() {
 	
 	ReviewParser<ifstream>::sets s;	
 	ReviewParser<ifstream>::sets funny;
-	std::set<Product_p> &funny_prods = funny.ps;
+	auto &funny_prods = funny.ps;
 	{
 		Reviewer::builder rrb;
 		Product::builder pb;
 		Review::builder rb;
+		NLTKInstance nltk;
+		NLTKInstance::Stemmer stemmer(nltk);
 		
-		vector<string> names = {
+		vector<string> names = { /*
 			"Sports_&_Outdoors.txt",
 			"Tools_&_Home_Improvement.txt",
 			"Toys_&_Games.txt",
@@ -29,18 +31,34 @@ int main() {
 			"Electronics.txt", 
 			"Clothing_&_Accessories.txt", 
 			"Gourmet_Foods.txt", //*/
-			"all-head.txt" , 
-			"Home_&_Kitchen.txt" ,
+			"all-head.txt"  /*
+			, "Home_&_Kitchen.txt" ,
 			"Video_Games.txt",
-			"Baby.txt",//*/
-			"Automotive.txt"
+			"Baby.txt",
+			"Automotive.txt" //*/
 		};
 		
 		std::string prefix = "/home/milano/course/nlp/data/";
 		
 		for (auto& endfix : names){
-			ReviewParser<ifstream>::parse(prefix + endfix,rrb,pb,rb,s);
+			ReviewParser<ifstream>::parse(prefix + endfix,stemmer, rrb,pb,rb,s);
 		}
+
+		std::cout << "parsing done" << std::endl;
+
+		long long hcntr = 0;
+		std::map<Product*, bool> seenmap;
+		Helpfulness threshold(95,100);
+		int cutoff = 4000;
+		for (auto& r : s.rs){
+			if (r->help.first > cutoff && (!seenmap[r->product.get()]) && (r->help > threshold) ) {
+				seenmap[r->product.get()] = true;
+				++hcntr;
+				std::cout << *r << std::endl;
+			}
+		}
+
+		std::cout << "number of >" << cutoff <<" vote reviews:" << hcntr << std::endl;
 
 		std::string word;
 		std::ifstream i("/home/milano/course/nlp/related-to-funny");
@@ -54,12 +72,12 @@ int main() {
 	}
 
 	int frevs;
-	std::set<Review_pp> &funny_reviews = funny.rs;
-	std::set<Reviewer_p> &funny_reviewers = funny.rrs;
+	auto &funny_reviews = funny.rs;
+	auto &funny_reviewers = funny.rrs;
 	{
 		for (auto &e : funny_prods) {
-			for (auto &r : e.lock()->reviews){
-				funny_reviews.insert(r.lock());
+			for (auto &r : lock<Product>(e)->reviews){
+				funny_reviews.insert(lock(r));
 			}
 		}
 		
@@ -106,7 +124,7 @@ int main() {
 			int count = 0;
 			for (auto &e : s.ps) {
 				++count;
-				normal_reviews.insert(e.lock()->reviews.begin()->lock());
+				normal_reviews.insert(lock(e)->reviews.begin()->lock());
 				if (count == frevs ) break;
 			}
 		}

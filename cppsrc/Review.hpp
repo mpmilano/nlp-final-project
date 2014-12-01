@@ -3,10 +3,10 @@
 #include <memory>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/access.hpp>
+#include <list>
 #include "Helpfulness.hpp"
 #include "Reviewer.hpp"
 #include "Product.hpp"
-
 
 
 class Review;
@@ -20,6 +20,8 @@ private:
 public:
 
 	const std::string summary;
+	const std::list<std::string> sentences;
+	const std::list<std::string> stemmed_sentences; 
 	const double score;
 	const int time;
 	const Reviewer_pp reviewer;
@@ -32,8 +34,10 @@ public:
 
 private: 
 	Review(	smart_int id, 
-	       const std::string summary, 
-	       double score, 
+		std::string summary, 
+		const std::list<std::string> &sentences,
+		const std::list<std::string> &stemmed_sentences,
+		double score, 
 	       int time, 
 	       const Reviewer_pp& reviewer, 
 	       const Helpfulness& help, 
@@ -41,6 +45,8 @@ private:
 	       const std::string& text):
 		id(id),
 		summary(summary),
+		sentences(sentences),
+		stemmed_sentences(stemmed_sentences),
 		score(score),
 		time(time),
 		reviewer(reviewer),
@@ -49,6 +55,8 @@ private:
 		text(text){}
 	
 public:
+
+	Review(const Review &r) = delete;
 
 	virtual ~Review(){ 
 		Product_pp p = product;

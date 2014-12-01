@@ -78,11 +78,15 @@ private:
 
 public:
 	struct sets {
-		std::set<Reviewer_p> rrs;
-		std::set<Product_p> ps;
+		
+		typedef Reviewer_p rrp;
+		typedef Product_p pp;
+
+		std::set<rrp> rrs;
+		std::set<pp> ps;
 		std::set<Review_pp> rs;
 
-		sets(std::set<Reviewer_p> rrs, std::set<Product_p> ps, std::set<Review_pp> rs)
+		sets(std::set<rrp> rrs, std::set<pp> ps, std::set<Review_pp> rs)
 			:rrs(rrs),ps(ps),rs(rs){}
 		sets(){}
 
@@ -134,8 +138,8 @@ public:
 			m.ps.reserve(ps.size());
 			m.rs.reserve(rs.size());
 			{ std:: cout << "sizes: " << rrs.size() << " " << ps.size() << " " << rs.size() << std::endl; }
-			for (auto &e: rrs) m.rrs.push_back(e.lock()->pod_pack());
-			for (auto &e: ps) m.ps.push_back(e.lock()->pod_pack());
+			for (auto &e: rrs) m.rrs.push_back(lock(e)->pod_pack());
+			for (auto &e: ps) m.ps.push_back(lock(e)->pod_pack());
 			for (auto &e: rs) m.rs.push_back(e->pod_pack());
 			return m;
 		}
@@ -176,7 +180,8 @@ private:
 	}
 	
 	public: 
-	static void parse(const std::string &filename, Reviewer::builder &rrb, Product::builder &pb, Review::builder &rb, sets &s ) {
+	static void parse(const std::string &filename, NLTKInstance::Stemmer &stem, 
+			  Reviewer::builder &rrb, Product::builder &pb, Review::builder &rb, sets &s ) {
 
 		
 		    std::cout << "starting parse" << std::endl;
@@ -188,9 +193,9 @@ private:
 		    
 		    sets sout;
 
-		    std::set<Reviewer_p> &cs = sout.rrs;
-		    std::set<Product_p> &ps = sout.ps;
-		    std::set<Review_pp> &rs = sout.rs;
+		    auto &cs = sout.rrs;
+		    auto &ps = sout.ps;
+		    auto &rs = sout.rs;
 		    
 		    int count = 0;
 
@@ -220,13 +225,15 @@ private:
 			    auto c = (rrb.build(reviewProfileName, reviewUserId));
 			    Helpfulness h = Helpfulness::build(std::stoi(pre_substr(reviewHelpfulness,"/")), 
 							       std::stoi(post_substr(reviewHelpfulness,"/")));
-			    auto r = rb.build(reviewSummary,std::stod(reviewScore), std::stoi(reviewTime),c,h,p,reviewText);
-			    cs.insert(Reviewer_p(c));
-			    s.rrs.insert(Reviewer_p(c));
-			    ps.insert(Product_p(p));
-			    s.ps.insert(Product_p(p));
-			    s.rs.insert(Review_pp(new Review(*r)));
-			    rs.insert(std::move(r));
+			    auto r = rb.build(stem,reviewSummary,std::stod(reviewScore), std::stoi(reviewTime),c,h,p,reviewText);
+			    typename sets::rrp rrp(c);
+			    cs.insert(rrp);
+			    s.rrs.insert(rrp);
+			    typename sets::pp pp(p);
+			    ps.insert(pp);
+			    s.ps.insert(pp);
+			    s.rs.insert(r);
+			    rs.insert(r);
 		    }
 		    
 		    std::cout << "completed parse" << std::endl;

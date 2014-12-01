@@ -1,6 +1,7 @@
 #pragma once
 #include "Review.hpp"
 #include "Review_builder.hpp"
+#include <boost/serialization/list.hpp>
 
 //Review Memo!
 class Review::Memo : public ::Memo<Review_pp> {
@@ -12,6 +13,8 @@ class Review::Memo : public ::Memo<Review_pp> {
 
 	smart_int id;
 	std::string summary;
+	std::list<std::string> sentences;
+	std::list<std::string> stemmed_sentences;
 	Score score;
 	int time;
 	smart_int reviewer;
@@ -23,6 +26,8 @@ class Review::Memo : public ::Memo<Review_pp> {
 	void serialize(Archive &ar, const unsigned int /*version*/)  {
 		ar & id;
 		ar & summary;
+		ar & sentences;
+		ar & stemmed_sentences;
 		ar & score;
 		ar & time;
 		ar & reviewer;
@@ -39,7 +44,7 @@ public:
 	Review_pp unpack() const{
 		auto rr = Reviewer_pp((Reviewer::Memo(reviewer)).unpack());
 		auto pr = Product_pp((Product::Memo(product)).unpack());
-		return builder::b()->build(id,summary,score,time,rr,help,pr,text);
+		return builder::b()->build(id,summary,sentences, stemmed_sentences,score,time,rr,help,pr,text);
 	}
 	
 

@@ -49,6 +49,30 @@ struct plain_ptr {
 
 };
 
+template<typename Collection> 
+Collection inline StringSplit(const std::string &source, const char *delimiter = " ", bool keepEmpty = false)
+{
+	Collection results;
+
+	size_t prev = 0;
+	size_t next = 0;
+
+	while ((next = source.find_first_of(delimiter, prev)) != std::string::npos)
+	{
+		if (keepEmpty || (next - prev != 0))
+		{
+			results.push_back(source.substr(prev, next - prev));
+		}
+		prev = next + 1;
+	}
+
+	if (prev < source.size())
+	{
+		results.push_back(source.substr(prev));
+	}
+
+	return results;
+}
 
 struct smart_int {
 	typedef unsigned long long t;
@@ -132,4 +156,14 @@ namespace std {
 template<typename T>
 bool operator==(const std::weak_ptr<T> &a, const std::weak_ptr<T> &b){
 	return a.lock() == b.lock();
+}
+
+template<typename T>
+std::shared_ptr<T> lock(const std::weak_ptr<T> &p){
+	return p.lock();
+}
+
+template<typename T>
+std::shared_ptr<T> lock(const std::shared_ptr<T>& t){
+	return t;
 }
