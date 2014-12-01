@@ -25,7 +25,7 @@ int main() {
 		Review::builder rb(tok,stemmer);
 
 		
-		vector<string> names = { /*
+		vector<string> names = { 
 			"Sports_&_Outdoors.txt",
 			"Tools_&_Home_Improvement.txt",
 			"Toys_&_Games.txt",
@@ -33,7 +33,7 @@ int main() {
 			"Electronics.txt", 
 			"Clothing_&_Accessories.txt", 
 			"Gourmet_Foods.txt", //*/
-			"just-one.txt"  /*
+			"just-one.txt"  
 			, "all-head.txt" ,
 			"Home_&_Kitchen.txt" ,
 			"Video_Games.txt",
