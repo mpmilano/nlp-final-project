@@ -180,7 +180,7 @@ private:
 	}
 	
 	public: 
-	static void parse(const std::string &filename, NLTKInstance::Stemmer &stem, 
+	static void parse(const std::string &filename, 
 			  Reviewer::builder &rrb, Product::builder &pb, Review::builder &rb, sets &s ) {
 
 		
@@ -225,7 +225,7 @@ private:
 			    auto c = (rrb.build(reviewProfileName, reviewUserId));
 			    Helpfulness h = Helpfulness::build(std::stoi(pre_substr(reviewHelpfulness,"/")), 
 							       std::stoi(post_substr(reviewHelpfulness,"/")));
-			    auto r = rb.build(stem,reviewSummary,std::stod(reviewScore), std::stoi(reviewTime),c,h,p,reviewText);
+			    auto r = rb.build(reviewSummary,std::stod(reviewScore), std::stoi(reviewTime),c,h,p,reviewText);
 			    typename sets::rrp rrp(c);
 			    cs.insert(rrp);
 			    s.rrs.insert(rrp);
@@ -234,6 +234,7 @@ private:
 			    s.ps.insert(pp);
 			    s.rs.insert(r);
 			    rs.insert(r);
+
 		    }
 		    
 		    std::cout << "completed parse" << std::endl;

@@ -48,9 +48,10 @@ public:
 	}
 	
 
-	Memo(smart_int id, std::string s, double sc, int t, Reviewer::Memo r, Helpfulness h, Product::Memo p, std::string tx)
+	Memo(smart_int id, std::string s, std::list<std::string> ss, std::list<std::string> sts, 
+	     double sc, int t, Reviewer::Memo r, Helpfulness h, Product::Memo p, std::string tx)
 		:from_const(true),
-		 id(id),summary(s),score(sc),time(t),reviewer(r.id),help(h),product(p.id),text(tx){}
+		 id(id),summary(s),sentences(ss),stemmed_sentences(sts),score(sc),time(t),reviewer(r.id),help(h),product(p.id),text(tx){}
 	Memo():id(-1),reviewer(-1),product(-1){}
 	
 	bool from_archive() const {return serialize_called && (!from_const); }
@@ -60,10 +61,10 @@ public:
 };
 
 Review::Memo_p Review::pack() const {
-	return Memo_p(new Memo(id,summary,score,time,reviewer->pod_pack(),help,product->pod_pack(),text));
+	return Memo_p(new Memo(id,summary,sentences,stemmed_sentences,score,time,reviewer->pod_pack(),help,product->pod_pack(),text));
 }
 Review::Memo Review::pod_pack() const {
-	return Memo(id,summary,score,time,reviewer->pod_pack(),help,product->pod_pack(),text);
+	return Memo(id,summary,sentences,stemmed_sentences,score,time,reviewer->pod_pack(),help,product->pod_pack(),text);
 }
 
 BOOST_CLASS_EXPORT_GUID(Review::Memo, "reviewmemo")

@@ -71,7 +71,7 @@ public:
 
 	//convert to POD format for serialization: 
 
-	class Memo;	
+	class Memo;
 
 	Memo_p pack() const; 
 	Memo pod_pack() const; 
@@ -87,6 +87,12 @@ std::ostream& operator<<(std::ostream& os, const Review& r){
 	os << "Helpfulness : " << r.help << std::endl;
 	os << "Product : " << r.product->title << std::endl;
 	os << "Review : " << r.text << std::endl;
+	os << "Review, stemmed : ";
+	for (auto &s : r.stemmed_sentences) os << s << " ";
+	os << std::endl;
+	os << "Sentences tokenized : BEGIN" << std::endl;
+	for (auto &s : r.sentences) os << s << std::endl << "-----" << std::endl;
+	os << "Sentences tokenized : END" << std::endl;	
 	return os;
 }
 

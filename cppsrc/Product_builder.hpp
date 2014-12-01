@@ -9,6 +9,7 @@ class Product::builder {
 	std::unordered_map<smart_int, Product_pp> pm;
 public:
 	
+	builder(const builder&) = delete;
 	builder():idr(0){ assert(b() == nullptr); b() = this; }
 	virtual ~builder() {b() = nullptr; std::cout << "builder done" << std::endl;}
 	

@@ -9,6 +9,7 @@ class Reviewer::builder{
 	static plain_ptr<builder>& b() {static plain_ptr<builder> b(nullptr); return b;}
 	
 public:
+	builder(const builder&) = delete;
 	builder():idr(0){ assert(b() == nullptr); b() = this; }
 	virtual ~builder() {b() = nullptr; std::cout << "builder done" << std::endl;}
 	

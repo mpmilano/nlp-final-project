@@ -17,11 +17,13 @@ int main() {
 	ReviewParser<ifstream>::sets funny;
 	auto &funny_prods = funny.ps;
 	{
+		NLTKInstance nltk;
+		NLTKInstance::Sentence_Tokenizer tok(nltk);
+		NLTKInstance::Stemmer stemmer(nltk);
 		Reviewer::builder rrb;
 		Product::builder pb;
-		Review::builder rb;
-		NLTKInstance nltk;
-		NLTKInstance::Stemmer stemmer(nltk);
+		Review::builder rb(tok,stemmer);
+
 		
 		vector<string> names = { /*
 			"Sports_&_Outdoors.txt",
@@ -31,8 +33,9 @@ int main() {
 			"Electronics.txt", 
 			"Clothing_&_Accessories.txt", 
 			"Gourmet_Foods.txt", //*/
-			"all-head.txt"  /*
-			, "Home_&_Kitchen.txt" ,
+			"just-one.txt"  /*
+			, "all-head.txt" ,
+			"Home_&_Kitchen.txt" ,
 			"Video_Games.txt",
 			"Baby.txt",
 			"Automotive.txt" //*/
@@ -41,7 +44,7 @@ int main() {
 		std::string prefix = "/home/milano/course/nlp/data/";
 		
 		for (auto& endfix : names){
-			ReviewParser<ifstream>::parse(prefix + endfix,stemmer, rrb,pb,rb,s);
+			ReviewParser<ifstream>::parse(prefix + endfix,rrb,pb,rb,s);
 		}
 
 		std::cout << "parsing done" << std::endl;
@@ -156,5 +159,10 @@ int main() {
 			
 			v2fo.close();
 		}
+	}
+
+	for (auto e : s.rs){
+		std::cout << *e << std::endl;
+		break;
 	}
 }
