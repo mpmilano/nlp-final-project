@@ -7,6 +7,9 @@
 #include <set>
 #include <sstream>
 #include <functional>
+#include "FirstVector.hpp"
+#include "SecondVector.hpp"
+#include <array>
 
 template<typename T>
 constexpr std::pair<bool,T> any_matches(const T& t){
@@ -20,7 +23,7 @@ constexpr std::pair<bool,T> any_matches(const T& t){
 
 template<char ...m>
 auto count_chars(const std::string &s) {
-	std::map<char,std::pair<std::list<int>, int> > ret;
+	std::array<std::pair<std::list<int>, int>, 256 > ret;
 	int pos = 0;
 	for (auto &c : s){
 		auto mp = any_matches<char,m...>(c);
@@ -29,130 +32,12 @@ auto count_chars(const std::string &s) {
 			++(e.second);
 			e.first.push_back(pos);
 		}
+		else if (ispunct(c)) ++(ret['p'].second);
 		else ++(ret['o'].second);
 		++pos;
 	}
 	return std::move(ret);
 }
-
-struct FirstVector{
-	const double commas_char; 
-	const double commas_word;
-	const double commas_sentence;
-	const double periods_chars;
-	const double periods_word;
-	const double periods_sentence;
-	const double quotes_chars;
-	const double quotes_word;
-	const double quotes_sentence;
-	const double apostrophe_chars;
-	const double apostrophe_word;
-	const double apostrophe_sentence;
-	const double ellipse_chars;
-	const double ellipse_word;
-	const double ellipse_sentence;
-	const int numchars;
-	const int numwords;
-	const int numsent;
-	const double percent_smallword_CAPS; //two-or-more characters
-	const double percent_bigword_CAPS; //three-or-more characters
-	
-	FirstVector(	double commas_char, 
-			double commas_word,
-			double commas_sentence,
-			double periods_chars,
-			double periods_word,
-			double periods_sentence,
-			double quotes_chars,
-			double quotes_word,
-			double quotes_sentence,
-			double apostrophe_chars,
-			double apostrophe_word,
-			double apostrophe_sentence,
-			double ellipse_chars,
-			double ellipse_word,
-			double ellipse_sentence,
-			int numchars,
-			int numwords,
-			int numsent,
-			double percent_smallword_CAPS, 
-			double percent_bigword_CAPS)
-	:commas_char(commas_char), 
-		commas_word(commas_word),
-		commas_sentence(commas_sentence),
-		periods_chars(periods_chars),
-		periods_word(periods_word),
-		periods_sentence(periods_sentence),
-		quotes_chars(quotes_chars),
-		quotes_word(quotes_word),
-		quotes_sentence(quotes_sentence),
-		apostrophe_chars(apostrophe_chars),
-		apostrophe_word(apostrophe_word),
-		apostrophe_sentence(apostrophe_sentence),
-		ellipse_chars(ellipse_chars),
-		ellipse_word(ellipse_word),
-		ellipse_sentence(ellipse_sentence),
-		numchars(numchars),
-		numwords(numwords),
-		numsent(numsent),
-		percent_smallword_CAPS(percent_smallword_CAPS), 
-		percent_bigword_CAPS(percent_bigword_CAPS){}
-
-	friend std::ostream& operator<<(std::ostream&, const FirstVector& );
-		
-};
-
-std::ostream& operator<<(std::ostream& os, const FirstVector& h){
-
-	return (os << "<" << h.commas_char << "," <<
-		h.commas_word << "," <<
-		h.commas_sentence << "," << 
-		h.periods_chars << "," << 
-		h.periods_word << "," << 
-		h.periods_sentence << "," << 
-		h.quotes_chars << "," << 
-		h.quotes_word << "," << 
-		h.quotes_sentence << "," << 
-		h.apostrophe_chars << "," << 
-		h.apostrophe_word << "," << 
-		h.apostrophe_sentence << "," << 
-		h.ellipse_chars << "," << 
-		h.ellipse_word << "," << 
-		h.ellipse_sentence << "," << 
-		h.numchars << "," << 
-		h.numwords << "," << 
-		h.numsent << "," << 
-		h.percent_smallword_CAPS  << "," << 
-		h.percent_bigword_CAPS << ">");
-
-}
-
-typedef std::set<std::string> wordset;
-typedef std::unique_ptr<std::set<std::string > > wordset_p;
-
-typedef std::pair < std::map<const std::string* const, int>, wordset*> SecondVector_np;
-
-
-typedef std::unique_ptr<const SecondVector_np > SecondVector_nc;
-typedef SecondVector_nc SecondVector;
-
-typedef std::unordered_map<Review_p, SecondVector> VecMap2;
-typedef std::unique_ptr<VecMap2 > VecMap2_p;
-
-std::ostream& pv2(std::ostream& os, const SecondVector_np &v ){
-	int cnt = 0;
-	os << "<";
-	for (auto &w : *(v.second)){
-		if (cnt != 0) os << ",";
-		os << w << ": " << ((v.first.find(&w) != v.first.end() ) ? v.first.at(&w) : 0);
-		++cnt;
-	}
-	os << ">";
-	return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const SecondVector_np &v )
-{ return pv2(os,v); }
 
 SecondVector word_counts(wordset *words, const std::string &s){
 
@@ -292,6 +177,12 @@ vec_tuple populate_vecs(const T &s){
 		auto capsp = capscount(rtext);
 		auto num2caps = capsp.first;
 		auto num3caps = capsp.second;
+
+		auto allpunct = countres['p'].second - (numellipse * 3);
+
+		//	token-stemmer? 
+		//	stop-words? 
+			
 		
 		map.emplace(rp,FirstVector(((double) countres[','].second) / numchars,
 					   ((double) countres[','].second) / numwords,
@@ -312,7 +203,11 @@ vec_tuple populate_vecs(const T &s){
 					   numwords,
 					   numsent,
 					   ((double) num2caps) / numwords,
-					   ((double) num3caps) / numwords
+					   ((double) num3caps) / numwords,
+					   fabs( (rp->help.operator double()) - rp->score),
+					   rp->help,
+					   rp->score, 
+					   allpunct
 				    ));
 		map2.emplace(rp,std::move(word_counts(&words,rtext)));
 	}
