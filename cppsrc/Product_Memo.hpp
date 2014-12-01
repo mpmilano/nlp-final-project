@@ -18,10 +18,12 @@ public:
 	Product_pp unpack() const {
 		assert(serialize_called);
 		assert(id != -1);
-		if (builder::b()->pm.find(id) != builder::b()->pm.end()) return builder::b()->pm.at(id);
+		auto b = builder::b();
+		if (b->pm.find(id) != b->pm.end()) return b->pm.at(id);
 		Product_pp ret(new Product(id,productID, title, price));
-		builder::b()->lookup[productID] = ret;
-		builder::b()->pm[id] = ret;
+		b->lookup[productID] = ret;
+		b->pm[id] = ret;
+		if (id > b->idr) b->idr = id;
 		return ret;
 	}
 	

@@ -34,12 +34,14 @@ public:
 	Reviewer_pp unpack() const {
 		assert(serialize_called);
 		assert (id != -1);	
-		if (builder::b()->rm.find(id) != builder::b()->rm.end()){
-			return builder::b()->rm.at(id);
+		auto b = builder::b();
+		if (b->rm.find(id) != b->rm.end()){
+			return b->rm.at(id);
 		}
 		Reviewer_pp ret(new Reviewer(id,profileName,userID));
-		builder::b()->lookup[userID] = ret;
-		builder::b()->rm[id] = ret;
+		b->lookup[userID] = ret;
+		b->rm[id] = ret;
+		if (id > b->idr) b->idr = id;
 		return ret;
 	}
 	Memo():id(-1){}

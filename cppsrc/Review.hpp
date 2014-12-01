@@ -20,7 +20,6 @@ private:
 public:
 
 	const std::string summary;
-	const std::list<std::string> sentences;
 	const std::list<std::string> stemmed_sentences; 
 	const double score;
 	const int time;
@@ -34,8 +33,7 @@ public:
 
 private: 
 	Review(	smart_int id, 
-		std::string summary, 
-		const std::list<std::string> &sentences,
+		std::string summary,
 		const std::list<std::string> &stemmed_sentences,
 		double score, 
 	       int time, 
@@ -45,7 +43,6 @@ private:
 	       const std::string& text):
 		id(id),
 		summary(summary),
-		sentences(sentences),
 		stemmed_sentences(stemmed_sentences),
 		score(score),
 		time(time),
@@ -87,11 +84,8 @@ std::ostream& operator<<(std::ostream& os, const Review& r){
 	os << "Helpfulness : " << r.help << std::endl;
 	os << "Product : " << r.product->title << std::endl;
 	os << "Review : " << r.text << std::endl;
-	os << "Review, stemmed : ";
-	for (auto &s : r.stemmed_sentences) os << s << " ";
-	os << std::endl;
 	os << "Sentences tokenized : BEGIN" << std::endl;
-	for (auto &s : r.sentences) os << s << std::endl << "-----" << std::endl;
+	for (auto &s : r.stemmed_sentences) os << s << std::endl << "-----" << std::endl;
 	os << "Sentences tokenized : END" << std::endl;	
 	return os;
 }

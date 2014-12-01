@@ -34,8 +34,9 @@ int main() {
 			"Clothing_&_Accessories.txt", 
 			"Gourmet_Foods.txt", //*/
 			"just-one.txt"  
-			, "all-head.txt" ,
-			"Home_&_Kitchen.txt" ,
+			, 
+			"all-head.txt" 
+			, "Home_&_Kitchen.txt" ,
 			"Video_Games.txt",
 			"Baby.txt",
 			"Automotive.txt" //*/

@@ -19,7 +19,6 @@ public:
 
 	Review_pp build(smart_int id, 
 			const std::string &summary,
-			const std::list<std::string> &sentences,
 			const std::list<std::string> &stemmed_sentences,
 			double score, 
 			int time, 
@@ -27,7 +26,7 @@ public:
 			const Helpfulness &help, 
 			Product_pp &product, 
 			const std::string &text){
-		Review_pp ret(new Review(id,summary, std::move(sentences), std::move(stemmed_sentences), score, time, reviewer, help, product, text));
+		Review_pp ret(new Review(id,summary, std::move(stemmed_sentences), score, time, reviewer, help, product, text));
 		ret->self = ret;
 		reviewer->reviews.insert(ret);
 		product->reviews.insert(ret);
