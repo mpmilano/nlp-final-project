@@ -4,6 +4,7 @@
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/access.hpp>
 #include <list>
+#include <boost/flyweight.hpp>
 #include "Helpfulness.hpp"
 #include "Reviewer.hpp"
 #include "Product.hpp"
@@ -19,14 +20,17 @@ private:
 	const smart_int id;
 public:
 
-	const std::string summary;
-	const std::list<std::string> stemmed_sentences; 
+	typedef boost::flyweight<std::string> strt;
+	typedef std::list<boost::flyweight<std::string> > strlt;
+	const strt summary;
+	const strlt sentences; 
+	
 	const double score;
 	const int time;
 	const Reviewer_pp reviewer;
 	const Helpfulness help;
 	const Product_pp product;
-	const std::string text;
+	const strt text;
 
 	friend std::ostream& operator<<(std::ostream&, const Review& );
 
@@ -34,16 +38,16 @@ public:
 private: 
 	Review(	smart_int id, 
 		std::string summary,
-		const std::list<std::string> &stemmed_sentences,
-		double score, 
-	       int time, 
-	       const Reviewer_pp& reviewer, 
-	       const Helpfulness& help, 
-	       const Product_pp& product, 
-	       const std::string& text):
+			const std::list<boost::flyweight<std::string> > &sentences,
+			double score, 
+			int time, 
+			const Reviewer_pp& reviewer, 
+			const Helpfulness& help, 
+			const Product_pp& product, 
+			const std::string& text):
 		id(id),
 		summary(summary),
-		stemmed_sentences(stemmed_sentences),
+		sentences(sentences),
 		score(score),
 		time(time),
 		reviewer(reviewer),
@@ -85,7 +89,7 @@ std::ostream& operator<<(std::ostream& os, const Review& r){
 	os << "Product : " << r.product->title << std::endl;
 	os << "Review : " << r.text << std::endl;
 	os << "Sentences tokenized : BEGIN" << std::endl;
-	for (auto &s : r.stemmed_sentences) os << s << std::endl << "-----" << std::endl;
+	for (auto &s : r.sentences) os << s << std::endl << "-----" << std::endl;
 	os << "Sentences tokenized : END" << std::endl;	
 	return os;
 }

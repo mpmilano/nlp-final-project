@@ -131,10 +131,12 @@ public:
 		Sentence_Tokenizer(NLTKInstance& i):inst(i){}
 		Sentence_Tokenizer(const Sentence_Tokenizer&) = delete;
 		
-		std::list<std::string> tokenize(std::string s){
+		
+		template<typename container, typename string>
+		auto tokenize(string s){
 			if (!built) init();
-			std::list<std::string> rret;
-			auto ps = PyString_FromString(s.c_str());
+			container rret;
+			auto ps = PyString_FromString(s.get().c_str());
 			auto tret = PyObject_CallMethodObjArgs(obj,mname,ps,NULL);
 			auto ret = PySequence_Fast(tret,"don't care");
 			assert(ret != nullptr);
@@ -143,7 +145,7 @@ public:
 			auto limit = PySequence_Size(ret);
 			auto arr = PySequence_Fast_ITEMS(ret);
 			for (auto i = 0 ; i < limit; ++i)
-				rret.push_back(PyString_AsString(arr[i]));
+				rret.push_back(string(PyString_AsString(arr[i])));
 			Py_DECREF(ret);
 			Py_DECREF(tret);
 			Py_DECREF(ps);

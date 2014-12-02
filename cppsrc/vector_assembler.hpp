@@ -157,7 +157,7 @@ vec_tuple populate_vecs(const T &s){
 		
 		const auto &rtext = rp->text;
 		auto countres = count_chars<',','.','"','\'',' ','?','!'>(rtext);
-		auto numchars = rtext.size();
+		auto numchars = rtext.get().size();
 		auto numellipse = count_repeats<isthree>(countres['.'].first);
 		auto numwords = 1 + count_repeats<gtz >(countres[' '].first);
 		//this is a rough estimate

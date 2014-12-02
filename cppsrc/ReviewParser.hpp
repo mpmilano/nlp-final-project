@@ -225,7 +225,7 @@ private:
 			    auto c = (rrb.build(reviewProfileName, reviewUserId));
 			    Helpfulness h = Helpfulness::build(std::stoi(pre_substr(reviewHelpfulness,"/")), 
 							       std::stoi(post_substr(reviewHelpfulness,"/")));
-			    auto r = rb.build(reviewSummary,std::stod(reviewScore), std::stoi(reviewTime),c,h,p,reviewText);
+			    auto r = rb.build(Review::strt(reviewSummary),std::stod(reviewScore), std::stoi(reviewTime),c,h,p,Review::strt(reviewText));
 			    typename sets::rrp rrp(c);
 			    cs.insert(rrp);
 			    s.rrs.insert(rrp);

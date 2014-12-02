@@ -13,7 +13,7 @@ class Review::Memo : public ::Memo<Review_pp> {
 
 	smart_int id;
 	std::string summary;
-	std::list<std::string> stemmed_sentences;
+	std::list<std::string> sentences;
 	Score score;
 	int time;
 	smart_int reviewer;
@@ -25,7 +25,7 @@ class Review::Memo : public ::Memo<Review_pp> {
 	void serialize(Archive &ar, const unsigned int /*version*/)  {
 		ar & id;
 		ar & summary;
-		ar & stemmed_sentences;
+		ar & sentences;
 		ar & score;
 		ar & time;
 		ar & reviewer;
@@ -42,14 +42,16 @@ public:
 	Review_pp unpack() const{
 		auto rr = Reviewer_pp((Reviewer::Memo(reviewer)).unpack());
 		auto pr = Product_pp((Product::Memo(product)).unpack());
-		return builder::b()->build(id,summary,stemmed_sentences,score,time,rr,help,pr,text);
+		strlt sents;
+		for (auto s : sentences) sents.push_back(strt(s));
+		return builder::b()->build(id,summary,sents,score,time,rr,help,pr,text);
 	}
 	
 
-	Memo(smart_int id, std::string s, std::list<std::string> ss, std::list<std::string> sts, 
+	Memo(smart_int id, std::string s, std::list<std::string> ss, 
 	     double sc, int t, Reviewer::Memo r, Helpfulness h, Product::Memo p, std::string tx)
 		:from_const(true),
-		 id(id),summary(s),sentences(ss),stemmed_sentences(sts),score(sc),time(t),reviewer(r.id),help(h),product(p.id),text(tx){}
+		 id(id),summary(s),sentences(ss),score(sc),time(t),reviewer(r.id),help(h),product(p.id),text(tx){}
 	Memo():id(-1),reviewer(-1),product(-1){}
 	
 	bool from_archive() const {return serialize_called && (!from_const); }
@@ -59,10 +61,14 @@ public:
 };
 
 Review::Memo_p Review::pack() const {
-	return Memo_p(new Memo(id,summary,sentences,stemmed_sentences,score,time,reviewer->pod_pack(),help,product->pod_pack(),text));
+	std::list<std::string> snt;
+	for (auto &s : sentences) snt.push_back(std::string(s));
+	return Memo_p(new Memo(id,summary,snt,score,time,reviewer->pod_pack(),help,product->pod_pack(),text));
 }
 Review::Memo Review::pod_pack() const {
-	return Memo(id,summary,sentences,stemmed_sentences,score,time,reviewer->pod_pack(),help,product->pod_pack(),text);
+	std::list<std::string> snt;
+	for (auto &s : sentences) snt.push_back(std::string(s));
+	return Memo(id,summary,snt,score,time,reviewer->pod_pack(),help,product->pod_pack(),text);
 }
 
 BOOST_CLASS_EXPORT_GUID(Review::Memo, "reviewmemo")

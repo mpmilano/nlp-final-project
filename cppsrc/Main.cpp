@@ -19,10 +19,9 @@ int main() {
 	{
 		NLTKInstance nltk;
 		NLTKInstance::Sentence_Tokenizer tok(nltk);
-		NLTKInstance::Stemmer stemmer(nltk);
 		Reviewer::builder rrb;
 		Product::builder pb;
-		Review::builder rb(tok,stemmer);
+		Review::builder rb(tok);
 
 		
 		vector<string> names = { 
