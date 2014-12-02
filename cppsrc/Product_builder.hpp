@@ -13,9 +13,9 @@ public:
 	builder():idr(0){ assert(b() == nullptr); b() = this; }
 	virtual ~builder() {b() = nullptr; std::cout << "builder done" << std::endl;}
 	
-	Product_pp build(const std::string &productID, const std::string &title, double price){
+	Product_pp build(const std::string &productID, const std::string &title, double price, const std::string& productType){
 		if (lookup.find(productID) != lookup.end()) return lookup.at(productID);
-		Product_pp p( new Product(++idr, productID, title, price));
+		Product_pp p( new Product(++idr, productID, title, price, productType));
 		lookup[productID] = p;
 		return p;
 	}

@@ -9,9 +9,10 @@ public:
 	std::string productID;
 	std::string title;
 	double price;
+	std::string productType;
 	friend class Product;
-	Memo(smart_int id, std::string p, std::string t, double pr)
-		:from_const(true),id(id),productID(p),title(t),price(pr){}
+	Memo(smart_int id, std::string p, std::string t, double pr, std::string productType)
+		:from_const(true),id(id),productID(p),title(t),price(pr),productType(productType){}
 	Memo(){}
 	Memo(smart_int id):serialize_called(true),id(id){}
 	
@@ -20,7 +21,7 @@ public:
 		assert(id != -1);
 		auto b = builder::b();
 		if (b->pm.find(id) != b->pm.end()) return b->pm.at(id);
-		Product_pp ret(new Product(id,productID, title, price));
+		Product_pp ret(new Product(id,productID, title, price, productType));
 		b->lookup[productID] = ret;
 		b->pm[id] = ret;
 		if (id > b->idr) b->idr = id;
@@ -38,6 +39,7 @@ public:
 		ar & productID;
 		ar & title;
 		ar & price;
+		ar & productType;
 		serialize_called = true;
 		assert(id != -1);
 	}
@@ -45,7 +47,7 @@ public:
 
 
 
-Product::Memo_p Product::pack() const { return Memo_p(new Memo(id,productID,title,price));}
-Product::Memo Product::pod_pack() const { return Memo(id,productID,title,price);}
+Product::Memo_p Product::pack() const { return Memo_p(new Memo(id,productID,title,price, productType));}
+Product::Memo Product::pod_pack() const { return Memo(id,productID,title,price, productType);}
 
 BOOST_CLASS_EXPORT_GUID(Product::Memo, "productmemo")

@@ -160,10 +160,8 @@ vec_tuple populate_vecs(const T &s){
 		auto numchars = rtext.get().size();
 		auto numellipse = count_repeats<isthree>(countres['.'].first);
 		auto numwords = 1 + count_repeats<gtz >(countres[' '].first);
-		//this is a rough estimate
-		auto numsent = count_repeats<isone>(countres['.'].first) +
-				count_repeats<gtz>(countres['!'].first) +
-				count_repeats<gtz>(countres['?'].first) + 1;
+
+		auto numsent = rp->sentences.size();
 		{
 			if (numwords == 0 || numsent == 0) {
 				std::cout << *rp << std::endl;
@@ -207,7 +205,8 @@ vec_tuple populate_vecs(const T &s){
 					   fabs( (rp->help.operator double()) - rp->score),
 					   rp->help,
 					   rp->score, 
-					   allpunct
+								   allpunct,
+								   rp->product->productType
 				    ));
 		map2.emplace(rp,std::move(word_counts(&words,rtext)));
 	}

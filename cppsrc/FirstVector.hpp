@@ -25,6 +25,7 @@ struct FirstVector{
 	const double help;
 	const double stars;
 	const int allpunct;
+	const std::string &category;
 	
 	FirstVector(	double commas_char, 
 			double commas_word,
@@ -49,7 +50,8 @@ struct FirstVector{
 			double help_star_disparity,
 			double help,
 			double stars, 
-			int allpunct)
+					int allpunct,	
+					const std::string &category)
 	:commas_char(commas_char), 
 		commas_word(commas_word),
 		commas_sentence(commas_sentence),
@@ -73,7 +75,8 @@ struct FirstVector{
 		help_star_disparity(help_star_disparity),
 		help(help),
 		stars(stars),
-		allpunct(allpunct){}
+	 allpunct(allpunct),
+	 category(category){}
 
 	friend std::ostream& operator<<(std::ostream&, const FirstVector& );
 		
@@ -104,6 +107,7 @@ std::ostream& operator<<(std::ostream& os, const FirstVector& h){
 		h.help_star_disparity << "," << 
 		h.help << "," << 
 		h.stars << "," << 
-		h.allpunct << ">" ;
+		h.allpunct << "," << 
+		h.category << ">" ;
 
 }

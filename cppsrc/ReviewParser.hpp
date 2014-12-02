@@ -151,10 +151,10 @@ public:
 private:
 
 	bool readFromFile(const std::string &filename, sets &s) {
-	  
-	  
 		std::string cachefile = "/tmp/rc/" + strReplace(filename,'/','%');
-		std::ifstream ifs(cachefile, std::ios::binary | std::ios_base::in);
+		mmapStream ms(cachefile);
+		std::istream &ifs = ms.s;
+		//std::ifstream ifs(cachefile, std::ios::binary | std::ios_base::in);
 		if (! ifs.good()) return false;
 		{
 			std::cout << "file good - proceeding!" << std::endl;
@@ -163,7 +163,6 @@ private:
 			ia >> m;
 			m.unpack_into(s);
 		}//*/
-		ifs.close();
 		return true;
 	}
 	
@@ -212,6 +211,7 @@ private:
 			    std::string reviewTime = rp.reallyRead("review/time: ", "review/summary: ");
 			    std::string reviewSummary = rp.reallyRead("review/summary: ", "review/text: ");
 			    std::string reviewText = "";
+				const std::string &productType = filename;
 			    try {
 				    reviewText = rp.reallyRead("review/text: ", "product/productId: ");
 			    }
@@ -221,7 +221,7 @@ private:
 			    double price = -1;
 			    try {price = std::stod(productPrice);}
 			    catch (...) {}
-			    auto p = (pb.build(productId, productTitle, price));
+			    auto p = (pb.build(productId, productTitle, price, productType));
 			    auto c = (rrb.build(reviewProfileName, reviewUserId));
 			    Helpfulness h = Helpfulness::build(std::stoi(pre_substr(reviewHelpfulness,"/")), 
 							       std::stoi(post_substr(reviewHelpfulness,"/")));

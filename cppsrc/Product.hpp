@@ -23,11 +23,12 @@ public:
 	const std::string title;
 	const double price;
 	std::set<Review_p> reviews;
+	std::string productType;
 	const smart_int id;
 
 private:
-	Product(smart_int id, const std::string &productID, const std::string &title, const double &price)
-		:productID(productID),title(title),price(price),id(id) {
+	Product(smart_int id, const std::string &productID, const std::string &title, const double &price, const std::string& productType)
+		:productID(productID),title(title),price(price),productType(productType),id(id) {
 	}
 public:
 

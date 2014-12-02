@@ -1,5 +1,8 @@
 #pragma once
 #include <string>
+#include <cstddef>
+#include <boost/interprocess/file_mapping.hpp>
+#include <boost/interprocess/mapped_region.hpp>
 #include <iostream>
 #include <math.h>
 
@@ -167,3 +170,46 @@ template<typename T>
 std::shared_ptr<T> lock(const std::shared_ptr<T>& t){
 	return t;
 }
+
+namespace bip = boost::interprocess;
+
+struct membuf : std::streambuf
+{
+    membuf(char const* const buf, std::size_t const size)
+		{
+			char* const p = const_cast<char*>(buf);
+			this->setg(p, p, p + size);
+		}
+};
+
+struct imemstream : virtual membuf, std::istream
+{
+    imemstream(char const* const buf, std::size_t const size)
+		: membuf(buf, size),
+		  std::istream(static_cast<std::streambuf*>(this))
+		{ }
+
+	imemstream(const imemstream&) = delete;
+};
+
+class mmapStream {
+
+private:
+	bip::file_mapping mapping;
+	bip::mapped_region rgn;
+	char const* const mmaped_data;
+	std::size_t const mmap_size;
+
+public:
+
+	imemstream s;
+
+	mmapStream(const std::string &filename)
+		:mapping(filename.c_str(), bip::read_only),
+		 rgn(mapping, bip::read_only),
+		 mmaped_data(static_cast<char*>(rgn.get_address())),
+		 mmap_size(rgn.get_size()),
+		 s(mmaped_data, mmap_size){}
+
+};
+

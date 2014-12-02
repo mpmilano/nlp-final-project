@@ -16,15 +16,15 @@ int main() {
 	ReviewParser<ifstream>::sets s;	
 	ReviewParser<ifstream>::sets funny;
 	auto &funny_prods = funny.ps;
+	NLTKInstance nltk;
 	{
-		NLTKInstance nltk;
 		NLTKInstance::Sentence_Tokenizer tok(nltk);
 		Reviewer::builder rrb;
 		Product::builder pb;
 		Review::builder rb(tok);
 
 		
-		vector<string> names = { 
+		vector<string> names ({
 			"Sports_&_Outdoors.txt",
 			"Tools_&_Home_Improvement.txt",
 			"Toys_&_Games.txt",
@@ -39,7 +39,7 @@ int main() {
 			"Video_Games.txt",
 			"Baby.txt",
 			"Automotive.txt" //*/
-		};
+					});
 		
 		std::string prefix = "/home/milano/course/nlp/data/";
 		
