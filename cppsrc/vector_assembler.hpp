@@ -39,48 +39,16 @@ auto count_chars(const std::string &s) {
 	return std::move(ret);
 }
 
-SecondVector word_counts(wordset *words, const std::string &s){
+SecondVector word_counts(NLTKInstance::Word_Tokenizer& wt,  wordset *words, const std::string &s){
 
-	std::function<bool (std::istringstream &i, std::string &w)> getNextWord;
-
-	std::string wordbuffer = "";
-	
-	auto gnw = [&](std::istringstream &i, std::string &w){
-		if (wordbuffer == "") {
-			if (i >> wordbuffer) return getNextWord(i,w);
-			else return false;
-		}
-		w.clear();
-		int cnt = 0;
-		for (auto c : wordbuffer){
-			if ( (!isalnum(c)) && (w == "")) continue;
-			else if (!isalnum(c)) {
-				wordbuffer = wordbuffer.substr(cnt);
-				return true;
-			}
-			else w.push_back(c);
-			++cnt;
-		}
-		wordbuffer.clear();
-		if (w != "") return true;
-		else return getNextWord(i,w);
-	};
-	getNextWord = gnw;
-	
-
-	
 	auto retp = new SecondVector_np();
 	retp->second = words;
 	SecondVector_nc ret(retp);
 	auto &map = retp->first;
-	std::istringstream i(s);
-	std::string w;
-	while (getNextWord(i,w)){
+	for (const auto &w : wt.tokenize<std::list<std::string>, std::string>(s) ){
 		words->insert(w);
 		auto *word = &(*(words->find(w)));
-		{ ++(map[word]);
-			w.clear();
-		}
+		++(map[word]);
 	}
 	return std::move(ret);
 }
@@ -145,7 +113,7 @@ bool gtone(int x) {return x > 1; }
 bool gtz(int x) {return x > 0; }
 
 template<typename T> 
-vec_tuple populate_vecs(const T &s){
+vec_tuple populate_vecs(NLTKInstance::Word_Tokenizer &wt, const T &s){
 	VecMap1_p rret(new VecMap1());
 	auto& map = *rret;
 	VecMap2_p rret2(new VecMap2());
@@ -153,7 +121,7 @@ vec_tuple populate_vecs(const T &s){
 	wordset_p rwords(new wordset());
 	auto& words = *rwords;
 
-	for (auto &rp : s){
+	for (auto &rp : s) {
 		
 		const auto &rtext = rp->text;
 		auto countres = count_chars<',','.','"','\'',' ','?','!'>(rtext);
@@ -208,7 +176,7 @@ vec_tuple populate_vecs(const T &s){
 								   allpunct,
 								   rp->product->productType
 				    ));
-		map2.emplace(rp,std::move(word_counts(&words,rtext)));
+		map2.emplace(rp,std::move(word_counts(wt, &words,rtext)));
 	}
 
 	return std::make_tuple(std::move(rret),std::move(rret2),std::move(rwords));

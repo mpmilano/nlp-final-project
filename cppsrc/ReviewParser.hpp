@@ -151,19 +151,22 @@ public:
 private:
 
 	bool readFromFile(const std::string &filename, sets &s) {
-		std::string cachefile = "/tmp/rc/" + strReplace(filename,'/','%');
-		mmapStream ms(cachefile);
-		std::istream &ifs = ms.s;
-		//std::ifstream ifs(cachefile, std::ios::binary | std::ios_base::in);
-		if (! ifs.good()) return false;
-		{
-			std::cout << "file good - proceeding!" << std::endl;
-			boost::archive::binary_iarchive ia(ifs);
-			typename sets::Memo m;
-			ia >> m;
-			m.unpack_into(s);
-		}//*/
-		return true;
+		try {
+			std::string cachefile = "/tmp/rc/" + strReplace(filename,'/','%');
+			mmapStream ms(cachefile);
+			std::istream &ifs = ms.s;
+			//std::ifstream ifs(cachefile, std::ios::binary | std::ios_base::in);
+			if (! ifs.good()) return false;
+			{
+				std::cout << "file good - proceeding!" << std::endl;
+				boost::archive::binary_iarchive ia(ifs);
+				typename sets::Memo m;
+				ia >> m;
+				m.unpack_into(s);
+			}//*/
+			return true;
+		}
+		catch (...) { return false; }
 	}
 	
 	void writeToFile(const std::string& filename, sets &s) {

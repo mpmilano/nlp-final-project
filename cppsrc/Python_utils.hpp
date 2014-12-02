@@ -165,6 +165,85 @@ public:
 
 	friend class Sentence_Tokenizer;
 
+	class Word_Tokenizer{
+	private:
+
+		bool built = false;
+
+		NLTKInstance &inst;
+
+		//new 
+		py_type module, toker, tokname;
+		//borrowed 
+		py_type tokclass;
+
+		void init(){
+			assert(!built);
+			if (!inst.built) inst.init();
+			module = PyImport_ImportModule("nltk.tokenize.punkt");
+			tokclass = PyDict_GetItemString(PyModule_GetDict(module),"PunktWordTokenizer");
+			assert(module != nullptr);
+			assert(PyModule_Check(module));
+			assert(tokclass != nullptr);
+			assert(PyCallable_Check(tokclass));
+			toker = PyObject_CallObject(tokclass,nullptr);
+			assert(toker != nullptr);
+			tokname = PyString_FromString("tokenize");
+			built = true;
+		}
+
+	public:
+
+		Word_Tokenizer(NLTKInstance &i):inst(i){}
+
+		Word_Tokenizer(const Word_Tokenizer&) = delete;
+		
+		template<typename container, typename string>
+		container tokenize(const string &orig){
+			container rret;
+			if (!built) init();
+			/* return toker.tok(orig) */
+			auto pstr = PyString_FromString(orig.c_str());
+			assert (pstr != nullptr);
+			assert (PyString_Check(pstr));
+			assert (PyString_Size(pstr) == (int) orig.length());
+			auto tret = PyObject_CallMethodObjArgs(toker,tokname,pstr,NULL);
+			if (tret == nullptr) {
+				std::cerr << "In C++ function NLTKInstance::Toker::tok with argument " 
+					  << orig.c_str()
+					  << " (python " << PyString_AsString(pstr) << "):" << std::endl;
+				PyErr_Print();
+			}
+			assert (tret != nullptr);
+			auto ret = PySequence_Fast(tret,"don't care");
+			assert(ret != nullptr);
+
+			//all below borrowed (or ints)
+			auto limit = PySequence_Size(ret);
+			auto arr = PySequence_Fast_ITEMS(ret);
+			for (auto i = 0 ; i < limit; ++i)
+				rret.push_back(string(PyString_AsString(arr[i])));
+
+			Py_DECREF(ret);
+			Py_DECREF(tret);
+			Py_DECREF(ret);
+			Py_DECREF(pstr);
+			return rret;
+		}
+
+		virtual ~Word_Tokenizer(){
+			if (built) {
+				Py_DECREF(tokname);
+				Py_DECREF(toker);
+				Py_DECREF(module);
+			}
+		}
+
+	};
+
+	friend class Word_Tokenizer;
+
+
 
 	virtual ~NLTKInstance(){
 		if (built){
