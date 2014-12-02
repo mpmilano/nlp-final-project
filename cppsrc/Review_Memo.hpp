@@ -44,7 +44,9 @@ public:
 		auto pr = Product_pp((Product::Memo(product)).unpack());
 		strlt sents;
 		for (auto s : sentences) sents.push_back(strt(s));
-		return builder::b()->build(id,summary,sents,score,time,rr,help,pr,text);
+		strt summ(summary);
+		strt txt(text);
+		return builder::b()->build(id,summ,sents,score,time,rr,help,pr,txt);
 	}
 	
 

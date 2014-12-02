@@ -37,14 +37,14 @@ public:
 
 private: 
 	Review(	smart_int id, 
-		std::string summary,
-			const std::list<boost::flyweight<std::string> > &sentences,
+		const strt &summary,
+			const strlt &sentences,
 			double score, 
 			int time, 
 			const Reviewer_pp& reviewer, 
 			const Helpfulness& help, 
 			const Product_pp& product, 
-			const std::string& text):
+			const strt& text):
 		id(id),
 		summary(summary),
 		sentences(sentences),

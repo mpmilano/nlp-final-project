@@ -17,14 +17,14 @@ public:
 	
 
 	Review_pp build(smart_int id, 
-					const std::string &summary,
-					const std::list<boost::flyweight<std::string> > &sentences,
+					const strt &summary,
+					const strlt &sentences,
 					double score, 
 					int time, 
 					Reviewer_pp &reviewer, 
 					const Helpfulness &help, 
 					Product_pp &product, 
-					const std::string &text){
+					const strt &text){
 		Review_pp ret(new Review(id,summary, std::move(sentences), score, time, reviewer, help, product, text));
 		ret->self = ret;
 		reviewer->reviews.insert(ret);
@@ -40,7 +40,7 @@ public:
 					Product_pp &product, 
 					const Review::strt &text){
 		auto sent = tok.tokenize< Review::strlt, Review::strt>(text);
-		return build(id,summary,std::move(sent),score, time, reviewer, help, product, text);
+		return build(id,summary,sent,score, time, reviewer, help, product, text);
 	}
 	
 	Review_pp build(const Review::strt &summary,
