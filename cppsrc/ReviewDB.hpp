@@ -10,11 +10,11 @@ public:
 	typedef ReviewParser<std::ifstream>::sets sets;
 
 	auto writeToDB(const sets &s){
-		auto task1 = [&s](){ //reviewers 
-			SAConnection con;
-			con.Connect("AmazonReviews","research","researchVM",SA_MySQL_Client);
+		std::shared_ptr<SAConnection> con(new SAConnection());
+		con->Connect("AmazonReviews","research","researchVM",SA_MySQL_Client);
+		auto task1 = [&s, con](){ //reviewers 
 			
-			SACommand cmd(&con);
+			SACommand cmd(con.get());
 			cmd.setCommandText("insert into Reviewer (profileName, userID, id) values (:1, :2, :3)");
 			for (const auto &rr : s.rrs){
 				cmd << lock(rr)->profileName.c_str();
@@ -36,11 +36,9 @@ public:
 			}
 		};
 
-		auto task2 = [&s](){ //Products
-			SAConnection con;
-			con.Connect("AmazonReviews","research","researchVM",SA_MySQL_Client);
+		auto task2 = [&s,con](){ //Products
 			
-			SACommand cmd(&con);
+			SACommand cmd(con.get());
 			cmd.setCommandText("insert into Product (ProductID, Title, Price, ProductType, ProductRef) values (:1, :2, :3, :4, :5)");
 			for (const auto &p : s.ps){
 				cmd << lock(p)->productID.c_str() << lock(p)->title.c_str() 
@@ -61,10 +59,8 @@ public:
 			}
 		};
 
-		auto task3 = [&s](){ //reviews
-			SAConnection con;
-			con.Connect("AmazonReviews","research","researchVM",SA_MySQL_Client);
-			SACommand cmd(&con);
+		auto task3 = [&s, con](){ //reviews
+			SACommand cmd(con.get());
 			cmd.setCommandText("insert into Review (Summary, Score, Time, Reviewer, HelpYes, HelpTotal, Product, Text, Id) values (:1, :2, :3, :4, :5, :6, :7, :8, :9)");
 			for (const auto &r : s.rs){
 				long unsigned int ltime = r->time;
@@ -89,9 +85,9 @@ public:
 			}
 		};
 
-		auto fut1 = std::async(std::launch::async, task1).share();
-		auto fut2 = std::async(std::launch::async, task2).share();
-		auto fut3 = std::async(std::launch::async, task3).share();
+		auto fut1 = std::async(std::launch::deferred, task1).share();
+		auto fut2 = std::async(std::launch::deferred, task2).share();
+		auto fut3 = std::async(std::launch::deferred, task3).share();
 		
 		return [fut1, fut2, fut3](){
 			fut1.wait();

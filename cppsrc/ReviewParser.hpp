@@ -182,9 +182,9 @@ private:
 	}
 	
 	public: 
-	static void parse(const std::string &filename, 
+	static void parse(const std::string &pre, const std::string &post, 
 			  Reviewer::builder &rrb, Product::builder &pb, Review::builder &rb, sets &s ) {
-
+		const std::string filename = pre + post;
 		
 		    std::cout << "starting parse" << std::endl;
 
@@ -214,7 +214,7 @@ private:
 			    std::string reviewTime = rp.reallyRead("review/time: ", "review/summary: ");
 			    std::string reviewSummary = rp.reallyRead("review/summary: ", "review/text: ");
 			    std::string reviewText = "";
-				const std::string &productType = filename;
+				const std::string &productType = post;
 			    try {
 				    reviewText = rp.reallyRead("review/text: ", "product/productId: ");
 			    }

@@ -13,13 +13,17 @@
 
 using namespace std;
 int main() {
+
+	int numnormal = 1690;
 	
 	ReviewParser<ifstream>::sets s;	
 	ReviewParser<ifstream>::sets funny;
 	auto &funny_prods = funny.ps;
 	NLTKInstance nltk;
 
-	decltype(((ReviewDB*) nullptr)->writeToDB(*((ReviewDB::sets*) nullptr)))* sftup;
+	std::set<Review_pp> normal_reviews;
+
+	decltype(((ReviewDB*) nullptr)->writeToDB(*((ReviewDB::sets*) nullptr)))* sftup = nullptr;
 
 	{
 		NLTKInstance::Sentence_Tokenizer tok(nltk);
@@ -47,17 +51,24 @@ int main() {
 		std::string prefix = "/home/milano/course/nlp/data/";
 		
 		for (auto& endfix : names){
-			ReviewParser<ifstream>::parse(prefix + endfix,rrb,pb,rb,s);
+			ReviewParser<ifstream>::parse(prefix, endfix,rrb,pb,rb,s);
+			uint i = 0;
+			for (auto it = s.rs.rbegin(); i < (numnormal / names.size()) && it != s.rs.rend(); ++i){
+				normal_reviews.insert(*it);
+				++it;
+			}
+				
 		}
 
 		std::cout << "parsing done" << std::endl;
 
+		/*
 		{
 			ReviewDB db;
 			static auto dbres = db.writeToDB(s);
 			sftup = &dbres;
 			std::cout << "entering into DB done" << std::endl;
-		}
+		} //*/
 
 
 		long long hcntr = 0;
@@ -85,7 +96,7 @@ int main() {
 		std::cout << "of " << counter << " products, " << funny_prods.size() << " were in our current set" << std::endl;
 	}
 
-	int frevs;
+	uint frevs;
 	auto &funny_reviews = funny.rs;
 	auto &funny_reviewers = funny.rrs;
 	NLTKInstance::Word_Tokenizer wt(nltk);
@@ -137,13 +148,10 @@ int main() {
 		}
 		
 		{
-			std::set<Review_pp> normal_reviews;
 			{
-				int count = 0;
 				for (auto &e : s.ps) {
-					++count;
 					normal_reviews.insert(lock(e)->reviews.begin()->lock());
-					if (count == frevs ) break;
+					if (normal_reviews.size() == frevs ) break;
 				}
 			}
 			
@@ -191,5 +199,5 @@ int main() {
 			std::cout << *(v.second) << std::endl;
 	}
 
-	(*sftup)();
+	if (sftup) (*sftup)();
 }

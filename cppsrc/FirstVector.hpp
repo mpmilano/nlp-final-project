@@ -24,7 +24,7 @@ struct FirstVector{
 	const double help_star_disparity;
 	const double help;
 	const double stars;
-	const int allpunct;
+	const double allpunct;
 	const std::string &category;
 	
 	FirstVector(	double commas_char, 
@@ -50,7 +50,7 @@ struct FirstVector{
 			double help_star_disparity,
 			double help,
 			double stars, 
-					int allpunct,	
+					double allpunct,	
 					const std::string &category)
 	:commas_char(commas_char), 
 		commas_word(commas_word),

@@ -32,8 +32,8 @@ auto count_chars(const std::string &s) {
 			++(e.second);
 			e.first.push_back(pos);
 		}
-		else if (ispunct(c)) ++(ret['p'].second);
 		else ++(ret['o'].second);
+		if (ispunct(c)) ++(ret['p'].second);
 		++pos;
 	}
 	return std::move(ret);
@@ -145,7 +145,7 @@ vec_tuple populate_vecs(NLTKInstance::Word_Tokenizer &wt, NLTKInstance::Stemmer 
 		auto num2caps = capsp.first;
 		auto num3caps = capsp.second;
 
-		auto allpunct = countres['p'].second - (numellipse * 3);
+		auto allpunct = ((double) (countres['p'].second - (numellipse * 3))) / numchars;
 
 		//	token-stemmer? 
 		//	stop-words? 
