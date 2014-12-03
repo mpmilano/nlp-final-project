@@ -94,6 +94,8 @@ struct smart_int {
 		return (ab < 32 && bb < 32);
 	}
 
+	auto asInt() const {return i;}
+
 	auto operator++(){
 		auto tmp = i; auto ret = (++i); 
 		assert(tmp < ret); return ret;

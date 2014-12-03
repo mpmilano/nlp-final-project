@@ -75,10 +75,12 @@ public:
 		std::string stem(const std::string &orig){
 			if (!built) init();
 			/* return stemmer.stem(orig) */
-			auto pstr = PyString_FromString(orig.c_str());
+			auto pstr = PyString_FromStringAndSize
+				(orig.c_str(), 
+				 (ispunct(orig.at(orig.length() -1)) ? orig.length() -1 : orig.length())
+				);
 			assert (pstr != nullptr);
 			assert (PyString_Check(pstr));
-			assert (PyString_Size(pstr) == (int) orig.length());
 			auto ret = PyObject_CallMethodObjArgs(stemmer,stemname,pstr,NULL);
 			if (ret == nullptr) {
 				std::cerr << "In C++ function NLTKInstance::Stemmer::stem with argument " 

@@ -17,9 +17,9 @@ class Review : public Memoizeable<Review_pp> {
 
 private:
 	Review_p self;
-	const smart_int id;
 public:
 
+	const smart_int id;
 	typedef boost::flyweight<std::string> strt;
 	typedef std::list<boost::flyweight<std::string> > strlt;
 	const strt summary;

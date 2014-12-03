@@ -39,13 +39,14 @@ auto count_chars(const std::string &s) {
 	return std::move(ret);
 }
 
-SecondVector word_counts(NLTKInstance::Word_Tokenizer& wt,  wordset *words, const std::string &s){
+SecondVector word_counts(NLTKInstance::Stemmer &stemmer, NLTKInstance::Word_Tokenizer& wt,  wordset *words, const std::string &s){
 
 	auto retp = new SecondVector_np();
 	retp->second = words;
 	SecondVector_nc ret(retp);
 	auto &map = retp->first;
-	for (const auto &w : wt.tokenize<std::list<std::string>, std::string>(s) ){
+	for (const auto &wp : wt.tokenize<std::list<std::string>, std::string>(s) ){
+		const auto w = stemmer.stem(wp);
 		words->insert(w);
 		auto *word = &(*(words->find(w)));
 		++(map[word]);
@@ -113,7 +114,7 @@ bool gtone(int x) {return x > 1; }
 bool gtz(int x) {return x > 0; }
 
 template<typename T> 
-vec_tuple populate_vecs(NLTKInstance::Word_Tokenizer &wt, const T &s){
+vec_tuple populate_vecs(NLTKInstance::Word_Tokenizer &wt, NLTKInstance::Stemmer &stemmer, const T &s){
 	VecMap1_p rret(new VecMap1());
 	auto& map = *rret;
 	VecMap2_p rret2(new VecMap2());
@@ -176,7 +177,7 @@ vec_tuple populate_vecs(NLTKInstance::Word_Tokenizer &wt, const T &s){
 								   allpunct,
 								   rp->product->productType
 				    ));
-		map2.emplace(rp,std::move(word_counts(wt, &words,rtext)));
+		map2.emplace(rp,std::move(word_counts(stemmer, wt, &words,rtext)));
 	}
 
 	return std::make_tuple(std::move(rret),std::move(rret2),std::move(rwords));

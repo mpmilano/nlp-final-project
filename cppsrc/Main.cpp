@@ -6,6 +6,7 @@
 #include "Reviewer.hpp"
 #include "ReviewParser.hpp"
 #include "vector_assembler.hpp"
+#include "ReviewDB.hpp"
 #include <fstream>
 #include <unistd.h>
 #include <vector>
@@ -24,9 +25,9 @@ int main() {
 		Review::builder rb(tok);
 
 		
-		vector<string> names ({
+		vector<string> names ({ 
 			"Sports_&_Outdoors.txt",
-			"Tools_&_Home_Improvement.txt",
+			"Tools_&_Home_Improvement.txt",/*
 			"Toys_&_Games.txt",
 			"Health.txt",
 			"Electronics.txt", 
@@ -34,7 +35,7 @@ int main() {
 			"Gourmet_Foods.txt", //*/
 			"just-one.txt"  
 			, 
-			"all-head.txt" 
+			"all-head.txt" /*
 			, "Home_&_Kitchen.txt" ,
 			"Video_Games.txt",
 			"Baby.txt",
@@ -48,6 +49,13 @@ int main() {
 		}
 
 		std::cout << "parsing done" << std::endl;
+
+		{
+			ReviewDB db;
+			db.writeToDB(s);
+			std::cout << "entering into DB done" << std::endl;
+		}
+
 
 		long long hcntr = 0;
 		std::map<Product*, bool> seenmap;
@@ -77,10 +85,10 @@ int main() {
 	int frevs;
 	auto &funny_reviews = funny.rs;
 	auto &funny_reviewers = funny.rrs;
+	NLTKInstance::Word_Tokenizer wt(nltk);
+	NLTKInstance::Stemmer stemmer(nltk);
 
 	{
-		NLTKInstance::Word_Tokenizer wt(nltk);
-
 		{
 			for (auto &e : funny_prods) {
 				for (auto &r : lock<Product>(e)->reviews){
@@ -95,7 +103,7 @@ int main() {
 			wordset_p words;
 			{
 				//new scope because we don't want to accidentally use vecs.
-				auto vecs = populate_vecs(wt, funny_reviews);
+				auto vecs = populate_vecs(wt, stemmer, funny_reviews);
 				vec1 = std::move(std::get<0>(vecs));
 				vec2 = std::move(std::get<1>(vecs));
 				words = std::move(std::get<2>(vecs));
@@ -140,7 +148,7 @@ int main() {
 			
 			
 			VecMap1_p vec1n;
-			auto vecs = populate_vecs(wt, normal_reviews);
+			auto vecs = populate_vecs(wt, stemmer, normal_reviews);
 			vec1n = std::move(std::get<0>(vecs));
 			auto vec2n = std::move(std::get<1>(vecs));
 			
@@ -166,8 +174,17 @@ int main() {
 		}
 	}
 	
+	decltype(s.rs) oner;
 	for (auto e : s.rs){
-		std::cout << *e << std::endl;
+		oner.insert(e);
 		break;
+	}
+	for (auto &e : oner) {
+		std::cout << *e << std::endl;
+		auto vecs = populate_vecs(wt, stemmer, oner);
+		for (auto &v : *(std::get<0>(vecs))) 
+			std::cout << (v.second) << std::endl;
+		for (auto &v : *(std::get<1>(vecs)))
+			std::cout << *(v.second) << std::endl;
 	}
 }
