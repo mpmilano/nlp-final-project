@@ -29,20 +29,19 @@ int main() {
 
 		
 		vector<string> names ({ 
-			"Sports_&_Outdoors.txt",
-			"Tools_&_Home_Improvement.txt",/*
-			"Toys_&_Games.txt",
-			"Health.txt",
-			"Electronics.txt", 
-			"Clothing_&_Accessories.txt", 
-			"Gourmet_Foods.txt", //*/
-			"just-one.txt"  
-			, 
-			"all-head.txt" /*
-			, "Home_&_Kitchen.txt" ,
-			"Video_Games.txt",
-			"Baby.txt",
-			"Automotive.txt" //*/
+				"Sports_&_Outdoors.txt",
+					"Tools_&_Home_Improvement.txt",
+					"Toys_&_Games.txt",
+					"Health.txt",
+					"Electronics.txt", 
+					"Clothing_&_Accessories.txt", 
+					"Gourmet_Foods.txt", 
+					"just-one.txt",
+					"all-head.txt", 
+					"Home_&_Kitchen.txt" ,
+					"Video_Games.txt" ,
+					"Baby.txt",
+					"Automotive.txt" 
 					});
 		
 		std::string prefix = "/home/milano/course/nlp/data/";
