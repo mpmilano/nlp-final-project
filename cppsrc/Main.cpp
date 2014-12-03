@@ -18,6 +18,9 @@ int main() {
 	ReviewParser<ifstream>::sets funny;
 	auto &funny_prods = funny.ps;
 	NLTKInstance nltk;
+
+	decltype(((ReviewDB*) nullptr)->writeToDB(*((ReviewDB::sets*) nullptr)))* sftup;
+
 	{
 		NLTKInstance::Sentence_Tokenizer tok(nltk);
 		Reviewer::builder rrb;
@@ -52,7 +55,8 @@ int main() {
 
 		{
 			ReviewDB db;
-			db.writeToDB(s);
+			static auto dbres = db.writeToDB(s);
+			sftup = &dbres;
 			std::cout << "entering into DB done" << std::endl;
 		}
 
@@ -187,4 +191,6 @@ int main() {
 		for (auto &v : *(std::get<1>(vecs)))
 			std::cout << *(v.second) << std::endl;
 	}
+
+	(*sftup)();
 }

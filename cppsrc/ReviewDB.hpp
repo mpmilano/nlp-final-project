@@ -9,7 +9,7 @@ public:
 
 	typedef ReviewParser<std::ifstream>::sets sets;
 
-	void writeToDB(const sets &s){
+	auto writeToDB(const sets &s){
 		auto task1 = [&s](){ //reviewers 
 			SAConnection con;
 			con.Connect("AmazonReviews","research","researchVM",SA_MySQL_Client);
@@ -89,12 +89,15 @@ public:
 			}
 		};
 
-		auto fut1 = std::async(std::launch::async, task1);
-		auto fut2 = std::async(std::launch::async, task2);
-		auto fut3 = std::async(std::launch::async, task3);
-		fut1.wait();
-		fut2.wait();
-		fut3.wait();
+		auto fut1 = std::async(std::launch::async, task1).share();
+		auto fut2 = std::async(std::launch::async, task2).share();
+		auto fut3 = std::async(std::launch::async, task3).share();
+		
+		return [fut1, fut2, fut3](){
+			fut1.wait();
+			fut2.wait();
+			fut3.wait();
+		};
 		
 	}
 
