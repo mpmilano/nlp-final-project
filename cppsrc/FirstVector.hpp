@@ -1,6 +1,7 @@
 #pragma once
 
 struct FirstVector{
+	const Review& review;
 	const double commas_char; 
 	const double commas_word;
 	const double commas_sentence;
@@ -27,7 +28,9 @@ struct FirstVector{
 	const double allpunct;
 	const std::string &category;
 	
-	FirstVector(	double commas_char, 
+	FirstVector(	
+		Review& review,
+		double commas_char, 
 			double commas_word,
 			double commas_sentence,
 			double periods_chars,
@@ -52,7 +55,8 @@ struct FirstVector{
 			double stars, 
 					double allpunct,	
 					const std::string &category)
-	:commas_char(commas_char), 
+		:review(review),
+		 commas_char(commas_char), 
 		commas_word(commas_word),
 		commas_sentence(commas_sentence),
 		periods_chars(periods_chars),
@@ -84,7 +88,11 @@ struct FirstVector{
 
 std::ostream& operator<<(std::ostream& os, const FirstVector& h){
 
-	return (os << "<" << h.commas_char << "," <<
+	return (os << "<" << 
+			h.review.time << "," << 
+			h.review.reviewer->userID << "," <<
+			h.review.product->productID << "," << 
+			h.commas_char << "," <<
 		h.commas_word << "," <<
 		h.commas_sentence << "," << 
 		h.periods_chars << "," << 

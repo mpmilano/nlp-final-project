@@ -151,7 +151,8 @@ vec_tuple populate_vecs(NLTKInstance::Word_Tokenizer &wt, NLTKInstance::Stemmer 
 		//	stop-words? 
 			
 		
-		map.emplace(rp,FirstVector(((double) countres[','].second) / numchars,
+		map.emplace(rp,FirstVector(*rp,
+						((double) countres[','].second) / numchars,
 					   ((double) countres[','].second) / numwords,
 					   ((double) countres[','].second) / numsent,
 					   ((double) countres['.'].second) / numchars,

@@ -33,19 +33,20 @@ int main() {
 
 		
 		vector<string> names ({ 
-				"Sports_&_Outdoors.txt",
-					"Tools_&_Home_Improvement.txt",
-					"Toys_&_Games.txt",
-					"Health.txt",
-					"Electronics.txt", 
-					"Clothing_&_Accessories.txt", 
-					"Gourmet_Foods.txt", 
+				"Sports",
+					"Tools",
+					"Toys",
+					"Health",
+					"Electronics", 
+					"Clothing", 
+					"GourmetFoods", 
 					"just-one.txt",
 					"all-head.txt", 
-					"Home_&_Kitchen.txt" ,
+					"HomeKitchen" ,
 					"Video_Games.txt" ,
 					"Baby.txt",
-					"Automotive.txt" 
+					"Automotive",
+				"funny-products.txt"
 					});
 		
 		std::string prefix = "/home/milano/course/nlp/data/";
@@ -62,7 +63,7 @@ int main() {
 
 		std::cout << "parsing done" << std::endl;
 
-		/*
+		
 		{
 			ReviewDB db;
 			static auto dbres = db.writeToDB(s);
