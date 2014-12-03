@@ -14,105 +14,38 @@
 using namespace std;
 int main() {
 
-	int numnormal = 1690;
-	
-	ReviewParser<ifstream>::sets s;	
 	ReviewParser<ifstream>::sets funny;
-	auto &funny_prods = funny.ps;
+	ReviewParser<ifstream>::sets normal;
+	auto &funny_reviews = funny.rs;
 	NLTKInstance nltk;
-
-	std::set<Review_pp> normal_reviews;
-
-	decltype(((ReviewDB*) nullptr)->writeToDB(*((ReviewDB::sets*) nullptr)))* sftup = nullptr;
+	NLTKInstance::Word_Tokenizer wt(nltk);
+	NLTKInstance::Stemmer stemmer(nltk);
 
 	{
 		NLTKInstance::Sentence_Tokenizer tok(nltk);
 		Reviewer::builder rrb;
 		Product::builder pb;
-		Review::builder rb(tok);
-
-		
-		vector<string> names ({ 
-				"Sports",
-					"Tools",
-					"Toys",
-					"Health",
-					"Electronics", 
-					"Clothing", 
-					"GourmetFoods", 
-					"just-one.txt",
-					"all-head.txt", 
-					"HomeKitchen" ,
-					"Video_Games.txt" ,
-					"Baby.txt",
-					"Automotive",
-				"funny-products.txt"
-					});
+		Review::builder rb(tok);		
 		
 		std::string prefix = "/home/milano/course/nlp/data/";
-		
-		for (auto& endfix : names){
-			ReviewParser<ifstream>::parse(prefix, endfix,rrb,pb,rb,s);
-			uint i = 0;
-			for (auto it = s.rs.rbegin(); i < (numnormal / names.size()) && it != s.rs.rend(); ++i){
-				normal_reviews.insert(*it);
-				++it;
-			}
-				
-		}
 
+		ReviewParser<ifstream>::parse(prefix,"second-funny-confirmed.txt",rrb,pb,rb,funny);
+		ReviewParser<ifstream>::parse(prefix,"second-funny-nope.txt",rrb,pb,rb,normal);
+		
 		std::cout << "parsing done" << std::endl;
-
-		
-		{
-			ReviewDB db;
-			static auto dbres = db.writeToDB(s);
-			sftup = &dbres;
-			std::cout << "entering into DB done" << std::endl;
-		} //*/
-
-
-		long long hcntr = 0;
-		std::map<Product*, bool> seenmap;
-		Helpfulness threshold(95,100);
-		int cutoff = 4000;
-		for (auto& r : s.rs){
-			if (r->help.first > cutoff && (!seenmap[r->product.get()]) && (r->help > threshold) ) {
-				seenmap[r->product.get()] = true;
-				++hcntr;
-				std::cout << *r << std::endl;
-			}
-		}
-
-		std::cout << "number of >" << cutoff <<" vote reviews:" << hcntr << std::endl;
-
-		std::string word;
-		std::ifstream i("/home/milano/course/nlp/related-to-funny");
-		int counter = 0;
-		while (i >> word){
-			++counter;
-			if (pb.interned(word)) funny_prods.insert(pb.build(word));
-			word.clear();
-		}
-		std::cout << "of " << counter << " products, " << funny_prods.size() << " were in our current set" << std::endl;
 	}
 
-	uint frevs;
-	auto &funny_reviews = funny.rs;
-	auto &funny_reviewers = funny.rrs;
-	NLTKInstance::Word_Tokenizer wt(nltk);
-	NLTKInstance::Stemmer stemmer(nltk);
-
+	decltype(funny.rs) normal_reviews;
 	{
-		{
-			for (auto &e : funny_prods) {
-				for (auto &r : lock<Product>(e)->reviews){
-					funny_reviews.insert(lock(r));
-				}
-			}
-			
-			std::cout << funny_reviews.size() << std::endl;
-			
+		auto it = normal.rs.begin();
+		for (auto &r : funny_reviews){
+			if (it == normal.rs.end()) break;
+			normal_reviews.insert(*it);
+			++it;
+		}
+	}
+
+	{{
 			VecMap1_p vec1;
 			VecMap2_p vec2;
 			wordset_p words;
@@ -142,23 +75,9 @@ int main() {
 				
 				v2fo.close();
 			}
-			frevs = funny_reviews.size();
-			for (auto &r : funny_reviews){
-				funny_reviewers.insert(r->reviewer);
-			}
 		}
 		
 		{
-			{
-				for (auto &e : s.ps) {
-					normal_reviews.insert(lock(e)->reviews.begin()->lock());
-					if (normal_reviews.size() == frevs ) break;
-				}
-			}
-			
-			for (auto &e : funny_reviews) normal_reviews.erase(e);
-			
-			
 			VecMap1_p vec1n;
 			auto vecs = populate_vecs(wt, stemmer, normal_reviews);
 			vec1n = std::move(std::get<0>(vecs));
@@ -184,21 +103,5 @@ int main() {
 				v2fo.close();
 			}
 		}
-	}
-	
-	decltype(s.rs) oner;
-	for (auto e : s.rs){
-		oner.insert(e);
-		break;
-	}
-	for (auto &e : oner) {
-		std::cout << *e << std::endl;
-		auto vecs = populate_vecs(wt, stemmer, oner);
-		for (auto &v : *(std::get<0>(vecs))) 
-			std::cout << (v.second) << std::endl;
-		for (auto &v : *(std::get<1>(vecs)))
-			std::cout << *(v.second) << std::endl;
-	}
-
-	if (sftup) (*sftup)();
+	}	
 }

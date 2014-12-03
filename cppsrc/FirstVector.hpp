@@ -20,8 +20,7 @@ struct FirstVector{
 	const int numchars;
 	const int numwords;
 	const int numsent;
-	const double percent_smallword_CAPS; //two-or-more characters
-	const double percent_bigword_CAPS; //three-or-more characters
+	const double percent_CAPS;
 	const double help_star_disparity;
 	const double help;
 	const double stars;
@@ -48,8 +47,7 @@ struct FirstVector{
 			int numchars,
 			int numwords,
 			int numsent,
-			double percent_smallword_CAPS, 
-			double percent_bigword_CAPS,
+			double percent_CAPS,
 			double help_star_disparity,
 			double help,
 			double stars, 
@@ -74,8 +72,7 @@ struct FirstVector{
 		numchars(numchars),
 		numwords(numwords),
 		numsent(numsent),
-		percent_smallword_CAPS(percent_smallword_CAPS), 
-		percent_bigword_CAPS(percent_bigword_CAPS),
+		percent_CAPS(percent_CAPS),
 		help_star_disparity(help_star_disparity),
 		help(help),
 		stars(stars),
@@ -110,12 +107,11 @@ std::ostream& operator<<(std::ostream& os, const FirstVector& h){
 		h.numchars << "," << 
 		h.numwords << "," << 
 		h.numsent << "," << 
-		h.percent_smallword_CAPS  << "," << 
-		h.percent_bigword_CAPS << ",") << 
+		h.percent_CAPS  << "," <<
 		h.help_star_disparity << "," << 
 		h.help << "," << 
 		h.stars << "," << 
 		h.allpunct << "," << 
-		h.category << ">" ;
+			h.category << ">" );
 
 }

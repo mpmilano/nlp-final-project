@@ -34,6 +34,7 @@ auto count_chars(const std::string &s) {
 		}
 		else ++(ret['o'].second);
 		if (ispunct(c)) ++(ret['p'].second);
+		if (isupper(c)) ++(ret['u'].second);
 		++pos;
 	}
 	return std::move(ret);
@@ -47,8 +48,8 @@ SecondVector word_counts(NLTKInstance::Stemmer &stemmer, NLTKInstance::Word_Toke
 	auto &map = retp->first;
 	for (const auto &wp : wt.tokenize<std::list<std::string>, std::string>(s) ){
 		const auto w = stemmer.stem(wp);
-		words->insert(w);
-		auto *word = &(*(words->find(w)));
+		wordset_insert(*words,w);
+		auto word = wordset_find(*words,w);
 		++(map[word]);
 	}
 	return std::move(ret);
@@ -141,10 +142,7 @@ vec_tuple populate_vecs(NLTKInstance::Word_Tokenizer &wt, NLTKInstance::Stemmer 
 			assert(numsent > 0);
 		}
 
-		auto capsp = capscount(rtext);
-		auto num2caps = capsp.first;
-		auto num3caps = capsp.second;
-
+		auto numcaps = countres.at('c').second;
 		auto allpunct = ((double) (countres['p'].second - (numellipse * 3))) / numchars;
 
 		//	token-stemmer? 
@@ -170,8 +168,7 @@ vec_tuple populate_vecs(NLTKInstance::Word_Tokenizer &wt, NLTKInstance::Stemmer 
 					   ((double) numchars),
 					   numwords,
 					   numsent,
-					   ((double) num2caps) / numwords,
-					   ((double) num3caps) / numwords,
+					   ((double) numcaps) / numchars,
 					   fabs( (rp->help.operator double()) - rp->score),
 					   rp->help,
 					   rp->score, 
@@ -180,6 +177,8 @@ vec_tuple populate_vecs(NLTKInstance::Word_Tokenizer &wt, NLTKInstance::Stemmer 
 				    ));
 		map2.emplace(rp,std::move(word_counts(stemmer, wt, &words,rtext)));
 	}
+
+	normalize(20,map2);
 
 	return std::make_tuple(std::move(rret),std::move(rret2),std::move(rwords));
 }
