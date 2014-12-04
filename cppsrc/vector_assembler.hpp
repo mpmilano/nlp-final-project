@@ -40,12 +40,14 @@ auto count_chars(const std::string &s) {
 	return std::move(ret);
 }
 
-SecondVector word_counts(NLTKInstance::Stemmer &stemmer, NLTKInstance::Word_Tokenizer& wt,  wordset *words, const std::string &s){
+SecondVector word_counts(Review* rp, NLTKInstance::Stemmer &stemmer, NLTKInstance::Word_Tokenizer& wt,  wordset *words, const std::string &s){
 
 	auto retp = new SecondVector_np();
-	retp->second = words;
+	std::get<0>(*retp) = rp;
+	assert(std::get<0>(*retp) == rp);
+	std::get<2>(*retp) = words;
 	SecondVector_nc ret(retp);
-	auto &map = retp->first;
+	auto &map = std::get<1>(*retp);
 	for (const auto &wp : wt.tokenize<std::list<std::string>, std::string>(s) ){
 		const auto w = stemmer.stem(wp);
 		wordset_insert(*words,w);
@@ -142,7 +144,7 @@ vec_tuple populate_vecs(NLTKInstance::Word_Tokenizer &wt, NLTKInstance::Stemmer 
 			assert(numsent > 0);
 		}
 
-		auto numcaps = countres.at('c').second;
+		auto numcaps = countres.at('u').second;
 		auto allpunct = ((double) (countres['p'].second - (numellipse * 3))) / numchars;
 
 		//	token-stemmer? 
@@ -175,10 +177,10 @@ vec_tuple populate_vecs(NLTKInstance::Word_Tokenizer &wt, NLTKInstance::Stemmer 
 								   allpunct,
 								   rp->product->productType
 				    ));
-		map2.emplace(rp,std::move(word_counts(stemmer, wt, &words,rtext)));
+		map2.emplace(rp,std::move(word_counts(rp.get(),stemmer, wt, &words,rtext)));
 	}
 
-	normalize(20,map2);
+	normalize(20,500, map2 );
 
 	return std::make_tuple(std::move(rret),std::move(rret2),std::move(rwords));
 }
