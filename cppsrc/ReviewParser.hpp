@@ -188,7 +188,8 @@ private:
 		
 		    std::cout << "starting parse" << std::endl;
 
-		    Input f(filename);
+			mmapStream ms(filename);
+			std::istream &f = ms.s;
 		    ReviewParser rp(f);
 
 		    if (rp.readFromFile(filename,s)) return;
