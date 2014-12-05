@@ -34,6 +34,8 @@ public:
 
 	friend std::ostream& operator<<(std::ostream&, const Review& );
 
+	static auto& constructed_count(){static long c = 0; return c;}
+
 
 private: 
 	Review(	smart_int id, 
@@ -53,13 +55,14 @@ private:
 		reviewer(reviewer),
 		help(help),
 		product(product),
-		text(text){}
+		text(text){++constructed_count();}
 	
 public:
 
 	Review(const Review &r) = delete;
 
 	virtual ~Review(){ 
+		--constructed_count();
 		Product_pp p = product;
 		Reviewer_pp r = reviewer;
 		p->reviews.erase(self);

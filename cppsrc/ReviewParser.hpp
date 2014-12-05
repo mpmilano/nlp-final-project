@@ -90,6 +90,12 @@ public:
 			:rrs(rrs),ps(ps),rs(rs){}
 		sets(){}
 
+		void clearAll(){
+			rrs.clear();
+			ps.clear();
+			rs.clear();
+		}
+
 
 		struct Memo : public ::Memo<sets> {
 
@@ -152,7 +158,7 @@ private:
 
 	bool readFromFile(const std::string &filename, sets &s) {
 		try {
-			std::string cachefile = "/tmp/rc/" + strReplace(filename,'/','%');
+			std::string cachefile = "/tmp/rc2/" + strReplace(filename,'/','%');
 			mmapStream ms(cachefile);
 			std::istream &ifs = ms.s;
 			//std::ifstream ifs(cachefile, std::ios::binary | std::ios_base::in);
@@ -170,7 +176,7 @@ private:
 	}
 	
 	void writeToFile(const std::string& filename, sets &s) {
-	  	std::string cachefile = "/tmp/rc/" + strReplace(filename,'/','%');
+	  	std::string cachefile = "/tmp/rc2/" + strReplace(filename,'/','%');
 		std::ofstream ofs(cachefile, std::ios::binary | std::ios_base::out);
 		{
 			boost::archive::binary_oarchive oa(ofs);

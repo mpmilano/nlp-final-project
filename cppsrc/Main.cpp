@@ -60,6 +60,23 @@ int main() {
 			"xbh",
 			"xbi"
 		};
+
+		std::map<const std::string, bool> done;
+		done["xaa"] = true;
+		done["xab"] = true;
+		done["xac"] = true;
+		done["xad"] = true;
+		done["xae"] = true;
+		done["xaf"] = true;
+		done["xag"] = true;
+		done["xah"] = true;
+		done["xai"] = true;
+		done["xaj"] = true;
+		done["xak"] = true;
+		done["xal"] = true;
+		done["xam"] = true;
+		done["xan"] = true;
+
 		
 		std::atomic_int running(0);
 
@@ -69,18 +86,42 @@ int main() {
 			
 			std::shared_ptr<ReviewParser<istream>::sets> s(new ReviewParser<istream>::sets);
 			
-			//don't overload RAM
-			while (running > 2) sleep(2);
-			
+
 			ReviewParser<istream>::parse(prefix, n, rrb,pb,rb,*s);
 
+			if (done[n]) continue;
+
+			
+			PrintOnce po("waiting for some tasks to finish....");
+			while (running > 3){ po.print(std::cout); sleep(2); }
+
 			//if we're lazy rather than async for some reason, launch a task.
-			if (futures.size() > 0 && running == 0) futures.back().get();
+			if (futures.size() > 0 && running == 0) futures.back().wait();
 
 			std::cout << "we managed to get through: " << n << std::endl;
 
-			std::shared_ptr<ReviewDB<istream> > db(new ReviewDB<istream>(std::string("AmazonReviews") + n));
-			futures.emplace_back(std::async(std::launch::async, [&running,db,s] (){ ++running; auto ret = db->writeToDB(db,s)(); --running; return ret;}));
+			futures.emplace_back(
+				std::async
+				(std::launch::async, [&running,s,n] ()
+				 { 
+					 try {
+						 std::shared_ptr<ReviewDB<istream> > db(new ReviewDB<istream>(std::string("AmazonReviews") + n));
+						 ++running; 
+						 auto ret = db->writeToDB(db,s).get(); 
+						 --running; 
+						 return ret; 
+					 }
+					 catch(SAUserException e){
+						 ReviewDB<istream>::printException(e);
+						 std::cout << "exception encountered while working on: " << n << std::endl;
+						 --running;
+						 return false;
+					 }
+					 
+					 s->clearAll();
+					 
+				 }
+					));
 			
 			//poor man's synchronization
 			sleep(1);

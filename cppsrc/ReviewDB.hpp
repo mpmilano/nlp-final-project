@@ -16,10 +16,11 @@ public:
 	ReviewDB(std::string dname):dbname(dname){
 		con.Connect(SAString(dbname.c_str()),"research","researchVM",SA_MySQL_Client);
 	}
-
-	auto writeToDB(std::shared_ptr<ReviewDB> sp, std::shared_ptr<const sets> s){
-		auto task1 = [s, this](){ //reviewers 
-			
+	
+	template <decltype(std::launch::deferred) launchpol = std::launch::deferred> 
+	auto writeToDB(std::shared_ptr<ReviewDB> sp, std::shared_ptr<const sets> s) {
+		assert(sp.get() == this);
+		auto task1 = [s, this](){ //reviewers
 			SACommand cmd(&con);
 			cmd.setCommandText("insert into Reviewer (profileName, userID, id) values (:1, :2, :3) ON DUPLICATE KEY UPDATE id=:3");
 			for (const auto &rr : s->rrs){
@@ -69,7 +70,7 @@ public:
 
 		auto task3 = [s, this](){ //reviews
 			SACommand cmd(&con);
-			cmd.setCommandText("insert into Review (Summary, Score, Time, Reviewer, HelpYes, HelpTotal, Product, Text, Id) values (:1, :2, :3, :4, :5, :6, :7, :8, :9)");
+			cmd.setCommandText("insert into Review (Summary, Score, Time, Reviewer, HelpYes, HelpTotal, Product, Text, Id) values (:1, :2, :3, :4, :5, :6, :7, :8, :9) on duplicate key update HelpYes=:5");
 			for (const auto &r : s->rs){
 				long unsigned int ltime = r->time;
 				long unsigned int lhf = r->help.first;
@@ -93,23 +94,25 @@ public:
 			}
 		};
 
-		auto fut1 = std::async(std::launch::deferred, task1).share();
-		auto fut2 = std::async(std::launch::deferred, task2).share();
-		auto fut3 = std::async(std::launch::deferred, task3).share();
+		auto fut1 = std::async(launchpol, task1).share();
+		auto fut2 = std::async(launchpol, task2).share();
+		auto fut3 = std::async(launchpol, task3).share();
 		
-		return [sp,fut1, fut2, fut3]() -> bool {
-			fut1.wait();
-			fut2.wait();
-			fut3.wait();
-			fut1.get();
-			fut2.get();
-			fut3.get();
-			return (sp->isValidMem());
-		};
-		
+		return std::async(launchpol,[sp,fut1, fut2, fut3]() -> bool {
+				fut1.get();
+				fut2.get();
+				fut3.get();
+				return (sp->isValidMem());
+			});
+	}
+	
+	static auto printException(SAException &e){
+		std::string errtxt = e.ErrText().GetMultiByteChars();
+		std::cerr << errtxt << std::endl;
+		sleep(1);
 	}
 
-	auto isValidMem(){
+	auto isValidMem() const {
 		return this;
 	}
 

@@ -215,3 +215,18 @@ public:
 
 };
 
+
+
+class PrintOnce{
+	std::string str;
+	bool printed = false;
+public:
+	PrintOnce(std::string msg):str(msg){}
+	template<typename T>
+	void print(T &a) {
+		if (!printed){
+			a << str << std::endl;
+			printed = true;
+		}
+	}
+};
