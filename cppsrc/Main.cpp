@@ -10,6 +10,7 @@
 #include <fstream>
 #include <unistd.h>
 #include <vector>
+#include "getusage.hpp"
 
 using namespace std;
 int main() {
@@ -24,59 +25,11 @@ int main() {
 		
 		std::string prefix = "/home/milano/course/nlp/data/fragmented/";
 		auto names = {
-			"xaa",
-			"xab",
-			"xac",
-			"xad",
-			"xae",
-			"xaf",
-			"xag",
-			"xah",
-			"xai",
-			"xaj",
-			"xak",
-			"xal",
-			"xam",
-			"xan",
-			"xao",
-			"xap",
-			"xaq",
-			"xar",
-			"xas",
-			"xat",
-			"xau",
-			"xav",
-			"xaw",
-			"xax",
-			"xay",
-			"xaz",
-			"xba",
-			"xbb",
 			"xbc",
-			"xbd",
-			"xbe",
-			"xbf",
-			"xbg",
-			"xbh",
-			"xbi"
+
 		};
 
-		std::map<const std::string, bool> done;
-		done["xaa"] = true;
-		done["xab"] = true;
-		done["xac"] = true;
-		done["xad"] = true;
-		done["xae"] = true;
-		done["xaf"] = true;
-		done["xag"] = true;
-		done["xah"] = true;
-		done["xai"] = true;
-		done["xaj"] = true;
-		done["xak"] = true;
-		done["xal"] = true;
-		done["xam"] = true;
-		done["xan"] = true;
-
+		std::map<const std::string, bool> done;		
 		
 		std::atomic_int running(0);
 
@@ -91,41 +44,54 @@ int main() {
 
 			if (done[n]) continue;
 
-			
-			PrintOnce po("waiting for some tasks to finish....");
-			while (running > 3){ po.print(std::cout); sleep(2); }
+			PrintOnce po("waiting for some tasks to finish....");	
+			while (CurrentMemUsage::getValue() > 13500000l && running > 0) { po.print(std::cout); sleep(2); }
 
 			//if we're lazy rather than async for some reason, launch a task.
 			if (futures.size() > 0 && running == 0) futures.back().wait();
 
 			std::cout << "we managed to get through: " << n << std::endl;
 
+			std::shared_ptr<BeginEndMessage> msg(new BeginEndMessage(std::string("launching thread for ") + n, 
+																	 std::string("destroying thread for ")+n));
+
 			futures.emplace_back(
 				std::async
-				(std::launch::async, [&running,s,n] ()
-				 { 
-					 try {
-						 std::shared_ptr<ReviewDB<istream> > db(new ReviewDB<istream>(std::string("AmazonReviews") + n));
-						 ++running; 
-						 auto ret = db->writeToDB(db,s).get(); 
-						 --running; 
-						 return ret; 
+				(std::launch::async, [&running,s,n,msg] () mutable
+				 {
+					 auto sl = s;
+					 auto msgl = msg;
+					 s.reset();
+					 msg.reset();
+					 {
+						 auto s = sl;
+						 auto msg = msgl;
+						 sl.reset();
+						 msgl.reset();
+						 msg->printFirst();
+						 try {
+							 std::shared_ptr<ReviewDB<istream> > db(new ReviewDB<istream>(std::string("AmazonReviews") + n));
+							 ++running; 
+							 DecrOnDelete<decltype(running)> dod(running);
+							 auto ret = db->writeToDB(db,s).get();
+							 s->clearAll();
+							 return ret; 
+						 }
+						 catch(SAUserException e){
+							 ReviewDB<istream>::printException(e);
+							 std::cout << "exception encountered while working on: " << n << std::endl;
+							 s->clearAll();
+							 return false;
+						 }
 					 }
-					 catch(SAUserException e){
-						 ReviewDB<istream>::printException(e);
-						 std::cout << "exception encountered while working on: " << n << std::endl;
-						 --running;
-						 return false;
-					 }
-					 
-					 s->clearAll();
-					 
 				 }
 					));
 			
 			//poor man's synchronization
 			sleep(1);
 		}
+
+		std::cout << "Waiting on some last threads..." << std::endl;
 		
 
 		//don't exit until the last task is done!

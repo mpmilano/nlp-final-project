@@ -230,3 +230,25 @@ public:
 		}
 	}
 };
+
+
+template<typename T>
+class DecrOnDelete {
+
+	T &t; 
+
+public:
+	DecrOnDelete(T &t):t(t){}
+
+	virtual ~DecrOnDelete(){--t;}
+
+};
+
+class BeginEndMessage{
+	std::string b;
+	std::string e;
+public:
+	BeginEndMessage(std::string b, std::string e):b(b),e(e){}
+	void printFirst() { std::cout << b << std::endl; }
+	virtual ~BeginEndMessage() { std::cout << e << std::endl;}
+};
