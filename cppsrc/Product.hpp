@@ -32,6 +32,8 @@ private:
 	}
 public:
 
+	Product(const Product &) = delete;
+
 	class Memo;
   	friend class Memo;
 	

@@ -17,7 +17,6 @@ public:
 	Memo(smart_int id):serialize_called(true),id(id){}
 	
 	Product_pp unpack() const {
-		assert(serialize_called);
 		assert(id != -1);
 		auto b = builder::b();
 		if (b->pm.find(id) != b->pm.end()) return b->pm.at(id);

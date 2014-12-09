@@ -133,12 +133,19 @@ public:
 		Sentence_Tokenizer(NLTKInstance& i):inst(i){}
 		Sentence_Tokenizer(const Sentence_Tokenizer&) = delete;
 		
+		const std::string sget(const std::string &s){
+			return s;
+		}
+
+		const std::string sget (const auto &s) { return s.get(); }
+
 		
-		template<typename container, typename string>
-		auto tokenize(string s){
+		template<typename container>
+		auto tokenize(auto &s){
 			if (!built) init();
 			container rret;
-			auto ps = PyString_FromString(s.get().c_str());
+			typedef typename decltype(rret)::value_type contained_type;
+			auto ps = PyString_FromString(sget(s).c_str());
 			auto tret = PyObject_CallMethodObjArgs(obj,mname,ps,NULL);
 			auto ret = PySequence_Fast(tret,"don't care");
 			assert(ret != nullptr);
@@ -147,7 +154,7 @@ public:
 			auto limit = PySequence_Size(ret);
 			auto arr = PySequence_Fast_ITEMS(ret);
 			for (auto i = 0 ; i < limit; ++i)
-				rret.push_back(string(PyString_AsString(arr[i])));
+				rret.push_back(contained_type (PyString_AsString(arr[i])));
 			Py_DECREF(ret);
 			Py_DECREF(tret);
 			Py_DECREF(ps);

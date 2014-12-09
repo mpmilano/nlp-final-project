@@ -34,6 +34,8 @@ public:
   	Memo_p pack() const;
 	Memo pod_pack() const;
 
+	Reviewer(const Reviewer &) = delete;
+
 	class builder;
 	friend class builder;
 

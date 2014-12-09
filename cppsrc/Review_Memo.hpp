@@ -8,6 +8,7 @@ class Review::Memo : public ::Memo<Review_pp> {
 	
 	bool serialize_called = false;
 	const bool from_const = false;
+public: 
 	
 	friend class boost::serialization::access; 
 
@@ -34,7 +35,6 @@ class Review::Memo : public ::Memo<Review_pp> {
 		ar & text;
 	}
 	
-public: 
 	bool operator<(const Memo &o) const {
 		return id < o.id;
 	}
@@ -49,6 +49,11 @@ public:
 		return builder::b()->build(id,summ,sents,score,time,rr,help,pr,txt);
 	}
 	
+	Memo(int id, std::string s, std::list<std::string> ss, 
+	     double sc, int t, int r, Helpfulness h, int p, std::string tx)
+		:from_const(true),
+		 id(id),summary(s),sentences(ss),score(sc),time(t),reviewer(r),help(h),product(p),text(tx){}
+
 
 	Memo(smart_int id, std::string s, std::list<std::string> ss, 
 	     double sc, int t, Reviewer::Memo r, Helpfulness h, Product::Memo p, std::string tx)

@@ -16,6 +16,7 @@
 #include "Review_Memo.hpp"
 #include "Review_builder.hpp"
 #include "Helpfulness.hpp"
+#include "ReviewDB.hpp"
 
 
 template<typename T> 
@@ -79,8 +80,8 @@ private:
 public:
 	struct sets {
 		
-		typedef Reviewer_p rrp;
-		typedef Product_p pp;
+		typedef Reviewer_pp rrp;
+		typedef Product_pp pp;
 
 		std::set<rrp> rrs;
 		std::set<pp> ps;
@@ -188,6 +189,46 @@ private:
 	}
 	
 	public: 
+
+	static void parseAndUpdateCategories(const std::string &filename){
+		mmapStream ms(filename);
+		std::istream &f = ms.s;
+		
+
+		bool first = true;
+		std::string category;
+		std::string product;
+		ReviewDB<Input> db("AmazonReviewsAllCpp");
+
+		while (f.good()){
+			std::string acc;
+			std::getline(f,acc);
+			if (acc.at(0) == ' '){
+				if (first) {
+					std::stringstream ss(acc);
+					std::string fw;
+					ss >> fw;
+					try {
+						if (ispunct(fw.at(fw.length() -1 ))){
+							fw = fw.substr(0,fw.length() -1 );
+						}
+					}
+					catch (std::out_of_range) {
+						category="<OTHER>";
+					}
+					category = fw;
+					first = false;
+					db.updateCategory(product,category);
+				}
+			}
+			else {
+				product = acc;
+				first = true;
+			}
+			acc.clear();
+		}
+	}
+
 	static void parse(const std::string &pre, const std::string &post, 
 			  Reviewer::builder &rrb, Product::builder &pb, Review::builder &rb, sets &s ) {
 		const std::string filename = pre + post;

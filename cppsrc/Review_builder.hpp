@@ -5,13 +5,13 @@
 class Review::builder{
 private:
 
-	NLTKInstance::Sentence_Tokenizer &tok;
 	smart_int idr;
 	static plain_ptr<builder>& b() {static plain_ptr<builder> b(nullptr); return b;}
 public:
+	NLTKInstance::Sentence_Tokenizer &tok;
 	friend class Review;
 	builder(NLTKInstance::Sentence_Tokenizer &tok)
-		:tok(tok),idr(0){ assert(b() == nullptr); b() = this; }
+		:idr(0),tok(tok){ assert(b() == nullptr); b() = this; }
 	builder(const builder&) = delete;
 	virtual ~builder() {b() = nullptr; std::cout << "builder done" << std::endl;}
 	
@@ -39,7 +39,7 @@ public:
 					const Helpfulness &help, 
 					Product_pp &product, 
 					const Review::strt &text){
-		auto sent = tok.tokenize< Review::strlt, Review::strt>(text);
+		auto sent = tok.tokenize< Review::strlt>(text);
 		return build(id,summary,sent,score, time, reviewer, help, product, text);
 	}
 	
