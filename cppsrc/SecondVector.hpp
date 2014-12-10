@@ -63,9 +63,9 @@ void normalize(int thresh, int over, VecMap2& vm2){
 		++i;
 	}
 
-	std::cout << "Top sorted counts: <";
+	/*std::cout << "Top sorted counts: <";
 	for (auto &p : top_sorted_counts) std::cout << p.second << ": " << p.first << ", ";
-	std::cout << ">";
+	std::cout << ">"; //*/
 }
 
 std::ostream& pv2(std::ostream& os, const SecondVector_np &v ){

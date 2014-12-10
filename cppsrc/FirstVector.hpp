@@ -1,31 +1,31 @@
 #pragma once
 
 struct FirstVector{
-	const Review& review;
-	const double commas_char; 
-	const double commas_word;
-	const double commas_sentence;
-	const double periods_chars;
-	const double periods_word;
-	const double periods_sentence;
-	const double quotes_chars;
-	const double quotes_word;
-	const double quotes_sentence;
-	const double apostrophe_chars;
-	const double apostrophe_word;
-	const double apostrophe_sentence;
-	const double ellipse_chars;
-	const double ellipse_word;
-	const double ellipse_sentence;
-	const int numchars;
-	const int numwords;
-	const int numsent;
-	const double percent_CAPS;
-	const double help_star_disparity;
-	const double help;
-	const double stars;
-	const double allpunct;
-	const std::string &category;
+	Review& review;
+	double commas_char; 
+	double commas_word;
+	double commas_sentence;
+	double periods_chars;
+	double periods_word;
+	double periods_sentence;
+	double quotes_chars;
+	double quotes_word;
+	double quotes_sentence;
+	double apostrophe_chars;
+	double apostrophe_word;
+	double apostrophe_sentence;
+	double ellipse_chars;
+	double ellipse_word;
+	double ellipse_sentence;
+	int numchars;
+	int numwords;
+	int numsent;
+	double percent_CAPS;
+	double help_star_disparity;
+	double help;
+	double stars;
+	double allpunct;
+	std::string &category;
 	
 	FirstVector(	
 		Review& review,
@@ -52,7 +52,7 @@ struct FirstVector{
 			double help,
 			double stars, 
 					double allpunct,	
-					const std::string &category)
+					std::string &category)
 		:review(review),
 		 commas_char(commas_char), 
 		commas_word(commas_word),

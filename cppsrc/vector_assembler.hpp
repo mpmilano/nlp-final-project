@@ -116,8 +116,8 @@ bool isthree(int x) { return x == 3; }
 bool gtone(int x) {return x > 1; }
 bool gtz(int x) {return x > 0; }
 
-template<typename T> 
-vec_tuple populate_vecs(NLTKInstance::Word_Tokenizer &wt, NLTKInstance::Stemmer &stemmer, const T &s){
+//we're not actually using any of the features that needed python.
+vec_tuple populate_vecs(const auto &s){
 	VecMap1_p rret(new VecMap1());
 	auto& map = *rret;
 	VecMap2_p rret2(new VecMap2());
@@ -177,10 +177,10 @@ vec_tuple populate_vecs(NLTKInstance::Word_Tokenizer &wt, NLTKInstance::Stemmer 
 								   allpunct,
 								   rp->product->productType
 				    ));
-		map2.emplace(rp,std::move(word_counts(rp.get(),stemmer, wt, &words,rtext)));
+		//map2.emplace(rp,std::move(word_counts(rp.get(),stemmer, wt, &words,rtext)));
 	}
 
-	normalize(20,500, map2 );
+	//normalize(20,500, map2 );
 
 	return std::make_tuple(std::move(rret),std::move(rret2),std::move(rwords));
 }

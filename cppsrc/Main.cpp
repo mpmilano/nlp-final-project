@@ -11,15 +11,12 @@
 #include <unistd.h>
 #include <vector>
 #include "getusage.hpp"
-#include "linear.h"
-#include "tron.h"
+
 #include "ReviewModel.hpp"
 
-static const std::string prefix = "/home/milano/course/nlp/data/";
-static const std::string conf = "second-funny-confirmed.txt";
-static const std::string nope = "second-funny-nope.txt";
+using namespace std;
 
-void initial_parse(NLTKInstance &nltk, ReviewParser<std::istream>::sets &funny, ReviewParser<std::istream>::sets &normal){
+void initial_parse(NLTKInstance &nltk, ReviewParser<std::istream>::sets &funny, ReviewParser<std::istream>::sets &normal, const std::string &prefix, const std::string &conf, const std::string &nope){
 	auto &funny_reviews = funny.rs;
 	NLTKInstance::Word_Tokenizer wt(nltk);
 	NLTKInstance::Stemmer stemmer(nltk);
@@ -34,14 +31,8 @@ void initial_parse(NLTKInstance &nltk, ReviewParser<std::istream>::sets &funny, 
 	}
 }
 
-using namespace std;
-int main() {
-
-	ReviewParser<istream>::sets funny;
-	ReviewParser<istream>::sets normal;
-	NLTKInstance nltk;	
-	ReviewDB db("AmazonReviewsAllCpp");
-
+void try_from_db(ReviewParser<istream>::sets &funny, ReviewParser<istream>::sets &normal, NLTKInstance& nltk, ReviewDB &db, 
+				 const std::string &prefix, const std::string &conf, const std::string &nope){
 	{
 		NLTKInstance::Sentence_Tokenizer tok(nltk);
 		std::unique_ptr<Review::builder> rb(new Review::builder(tok));
@@ -60,7 +51,7 @@ int main() {
 				normal.clearAll();
 				ReviewParser<istream>::sets oldfunny;
 				ReviewParser<istream>::sets oldnormal;
-				initial_parse(nltk,oldfunny,oldnormal);
+				initial_parse(nltk,oldfunny,oldnormal, prefix, conf, nope);
 				Review::builder rb(tok);
 				Product::builder pb;
 				Reviewer::builder rrb;
@@ -79,10 +70,40 @@ int main() {
 				}
 				
 				ReviewParser<istream>::writeToFile(prefix + conf, funny);
-				ReviewParser<istream>::writeToFile(prefix + nope, normal);
-				
+				ReviewParser<istream>::writeToFile(prefix + nope, normal);				
 			}
 		}
 	}
+}
+
+
+int main() {
+
+
+	static const std::string prefix = "/home/milano/course/nlp/data/";
+	static const std::string conf = "-funny-confirmed.txt";
+	static const std::string nope = "-funny-nope.txt";
+
+
+	ReviewParser<istream>::sets funny1;
+	ReviewParser<istream>::sets normal1;
+	ReviewParser<istream>::sets funny2;
+	ReviewParser<istream>::sets normal2;
+	NLTKInstance nltk;
+	ReviewDB db("AmazonReviewsAllCpp");
+	try_from_db(funny1,normal1,nltk,db,prefix,str_add("first",conf), str_add("first",nope));
+	try_from_db(funny2,normal2,nltk,db,prefix,str_add("second",conf), str_add("second",nope));
+
+	auto funny_train_vecs = populate_vecs(funny1.rs);
+	auto normal_train_vecs = populate_vecs(normal1.rs);
+
+	auto &vm1 = *std::get<0>(funny_train_vecs);
+	auto &vm2 = *std::get<0>(normal_train_vecs);
+	std::cout << "Vectors assembled" << std::endl;
+
+	ReviewModel m(vm1, vm2);
+	std::cout << "Model trained" << std::endl;
+
+	
 }
 
