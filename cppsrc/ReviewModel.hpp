@@ -8,7 +8,9 @@ class ReviewModel{
 
 private:
 
-	double val_as_double(const FirstVector &v, int pos) const{
+	static constexpr int num_features = 10;
+
+	static double val_as_double(const FirstVector &v, int pos) {
 		
 		switch(pos){
 		case 0: 
@@ -43,105 +45,142 @@ private:
 	struct problem *prob;
 	struct parameter *params;
 
+	template<int num_features>
+	static void convert(const FirstVector &v, feature_node x[num_features + 1]) {
+		for (int j = 0; j < num_features; ++j){
+			feature_node n;
+			n.index = j + 1;
+			n.value = val_as_double(v, j);
+			x[j] = n;
+		}
+		feature_node n;
+		n.index = -1;
+		n.value = -1;
+		x[num_features] = n;
+	}
 
-public:
-
-	enum class humor : int{
-		funny = 1, normal = 2
-	};
-
-	//construct with training set
-	ReviewModel(const VecMap1 &vm1_funny, const VecMap1 &vm1_normal)
-		:trained(nullptr),sm(),prob(sm.malloc<struct problem>(1)),params(sm.malloc<struct parameter>(1)) {
-
-		prob->n = 10;
+	static void build_problem(SafeMalloc &sm, problem &prob, const VecMap1 &vm1_funny, const VecMap1 &vm1_normal){
+		prob.n = num_features;
 		
 		int total_size = (1 + vm1_funny.size() + vm1_normal.size());
-		prob->l = total_size - 1;
+		prob.l = total_size - 1;
 		
 		double *y = sm.malloc<double>(total_size);
 		
 		struct feature_node **x = sm.malloc<feature_node *>(total_size);
-		
+		struct feature_node *x_elems = sm.malloc<feature_node>((prob.n * prob.l) + prob.l);
+
 		{ int i = 0;
 			for (auto &fp : vm1_funny){
-				x[i] = sm.malloc<feature_node>(prob->n +1);
+				x[i] = &x_elems[i * (prob.n +1)];
 				y[i] = (int) humor::funny;
-				for (int j = 0; j < prob->n; ++j){
-					feature_node n;
-					n.index = j;
-					n.value = val_as_double(fp.second, j);
-					x[i][j] = n;
-				}
-				feature_node n;
-				n.index = -1;
-				n.value = -1;
-				x[i][prob->n] = n;
+				convert<num_features>(fp.second, x[i]);
 				++i;
 			}
 			for (auto np : vm1_normal){
-				x[i] = sm.malloc<feature_node>(prob->n +1);
+				x[i] = &x_elems[i * (prob.n +1)];
 				y[i] = (int) humor::normal;
-				for (int j = 0; j < prob->n; ++j){
-					feature_node n;
-					n.index = j;
-					n.value = val_as_double(np.second, j);
-					x[i][j] = n;
-				}
-				feature_node n;
-				n.index = -1;
-				n.value = -1;
-				x[i][prob->n] = n;
+				convert<num_features>(np.second, x[i]);
 				++i;
-			}
-
-			if (i != prob->l){
-				std::cout << i << std::endl;
-				std::cout << prob->l << std::endl;
-				assert(i == prob->l);
 			}
 		}
 		
 		x[total_size - 1] = nullptr;
 		y[total_size - 1] = 0;
 	
-		prob->y = y;
-		prob->x = x;
-		prob->bias = 0;
+		prob.y = y;
+		prob.x = x;
+		prob.bias = 0;
+	}
 
-		params->solver_type = L1R_LR;
+public:
+
+	std::string print_test(std::pair<double, double> test_resuls) {
+		std::stringstream ss;
+		ss << "funnyrate: " << test_resuls.first * 100 << "%; normalrate: " << test_resuls.second * 100 << "%" << std::endl;
+		return ss.str();
+	}
+
+	std::pair<double, double> test(const VecMap1 &vm1_funny, const VecMap1 &vm1_normal) const{
+		int funny_rate = 0;
+		for (auto &vp : vm1_funny) if (predict(vp.second).h == humor::funny) ++funny_rate;
+		int normal_rate = 0;
+		for (auto &vp : vm1_normal) if (predict(vp.second).h == humor::normal) ++normal_rate;
+		return std::make_pair( ((double) funny_rate / vm1_funny.size()), ((double) normal_rate / vm1_normal.size()) );
 		
-		params->eps =  -0.001;
-		params->C = 0;
+	}
+
+
+	const problem& getProblem() const { return *prob;}
+
+	enum class humor : int{
+		funny = 1, normal = -1
+	};
+
+	struct classification{
+		humor h;
+		double confidence;
+	};
+
+
+	classification predict(const FirstVector &v) const {
+		feature_node x[num_features + 1];
+		convert<num_features>(v, x);
+		classification c;
+		c.confidence = ::predict(trained, x);
+		c.h = (c.confidence > 0 ? humor::funny : humor::normal);
+		//c.confidence = (c.confidence > 0 ? c.confidence : c.confidence * -1.0);
+		return c;
+	}
+
+
+	//construct with training set
+	ReviewModel(const VecMap1 &vm1_funny, const VecMap1 &vm1_normal)
+		:trained(nullptr),sm(),prob(sm.malloc<struct problem>(1)),params(sm.malloc<struct parameter>(1)) {
+
+		build_problem(sm, *prob, vm1_funny, vm1_normal);
+
+		params->solver_type = L2R_L2LOSS_SVC_DUAL;
+		
+		params->eps = 0.001;
+		params->C = 1;
 		params->nr_weight =0;
 		params->weight_label = nullptr;
 		params->weight = nullptr;
-		params->p = 0;
+		params->p = 0.1;
 
-		//testing memory time!
-
-		for (int i = 0; i < prob->l; ++i){
-			assert(y[i] + 1);
-			assert(x[i]);
-			for (int j = 0; j < prob->n; ++j){
-				assert(x[i][j].value + 2);
-			}
+		const char* pc = check_parameter(prob, params);
+		if (pc){
+			std::cerr << pc << std::endl;
+			assert(!check_parameter(prob, params));
 		}
-		
-		//trained = train(prob, params);
-		
-		//model* train (const struct prob->lem *prob->, const struct parameter *param); 
-
-		/*
-		  struct prob->lem
-		  {
-		    int l, n; // should be the same, number of features 
-			int *y;  // classification (integers which represent categories) 
-			struct feature_node **x; //pair of index,value
-			double bias; // this is 0
-		 */
-
+	
+		trained = train(prob, params);
 	}
 
 
 };
+
+std::ostream& operator<<(std::ostream& os, const ReviewModel::classification& s){
+	std::string h;
+	switch(s.h){
+	case ReviewModel::humor::funny: 
+		h = "funny";
+		break;
+	case ReviewModel::humor::normal:
+		h = "normal";
+		break;
+	}
+	return (os << h << " (with " << (s.confidence * 100) << "% confidence)");
+}
+
+std::ostream& operator<<(std::ostream& os, const problem &p){
+	for (int i = 0; i < p.l; ++i){
+		os << p.y[i];
+		os << " ";
+		for (int j = 0; p.x[i][j].index != -1 && j < p.n; ++j)
+			os << p.x[i][j].index << ":" << p.x[i][j].value << " ";
+		os << std::endl;
+	}
+	return os;
+}
