@@ -11,6 +11,8 @@ private:
 		return v.quotes_word * pos;
 	}
 
+	model *trained;
+
 public:
 
 	enum class humor : int{
@@ -21,18 +23,21 @@ public:
 	ReviewModel(const VecMap1 &vm1_funny, const VecMap1 &vm1_normal){
 
 		struct problem prob;
+		struct parameter params;
+
+
 		prob.n = 25;
 		
 		int total_size = (1 + vm1_funny.size() + vm1_normal.size());
 		prob.l = total_size - 1;
 		
-		double *y = (double*) malloc(sizeof(double) * total_size);
+		double *y = (double*) alloca(sizeof(double) * total_size);
 
-		struct feature_node **x = (feature_node **) malloc(sizeof(feature_node*) * total_size);
+		struct feature_node **x = (feature_node **) alloca(sizeof(feature_node*) * total_size);
 		
 		{ uint i = 0;
 			for (auto &fp : vm1_funny){
-				x[i] = (feature_node *) malloc(sizeof(feature_node) * (prob.n +1) );
+				x[i] = (feature_node *) alloca(sizeof(feature_node) * (prob.n +1) );
 				y[i] = (int) humor::funny;
 				for (int j = 0; j < prob.n; ++j){
 					feature_node n;
@@ -47,7 +52,7 @@ public:
 				++i;
 			}
 			for (auto np : vm1_normal){
-				x[i] = (feature_node *) malloc(sizeof(feature_node) * (prob.n +1) );
+				x[i] = (feature_node *) alloca(sizeof(feature_node) * (prob.n +1) );
 				y[i] = (int) humor::normal;
 				for (int j = 0; j < prob.n; ++j){
 					feature_node n;
@@ -69,7 +74,17 @@ public:
 		prob.y = y;
 		prob.x = x;
 		prob.bias = 0;
+
+		params.solver_type = L1R_LR;
 		
+		params.eps =  -0.001;
+		params.C = 0;
+		params.nr_weight =0;
+		params.weight_label = nullptr;
+		params.weight = nullptr;
+		params.p = 0;
+		
+		trained = train(&prob, &params);
 		
 		//model* train (const struct problem *prob, const struct parameter *param); 
 
@@ -82,7 +97,6 @@ public:
 			double bias; // this is 0
 		 */
 
-		free(y);
 	}
 
 
