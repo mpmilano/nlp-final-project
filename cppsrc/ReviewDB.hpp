@@ -1,22 +1,22 @@
 #pragma once
 #include <SQLAPI.h>
 #include <future>
+#include <execinfo.h>
 
 template<typename Input>
 class ReviewParser;
 
 
-template<typename Input>
 class ReviewDB{
 
 public:
 
-	typedef typename ReviewParser<Input>::sets sets;
+	typedef typename ReviewParser<std::istream>::sets sets;
 
 	std::string dbname;
 	SAConnection con;
 
-	ReviewDB(std::string dname):dbname(dname){
+	ReviewDB(std::string dname):dbname(dname) {
 		try {
 			con.Connect(SAString(dbname.c_str()),"research","researchVM",SA_MySQL_Client);
 		}
@@ -29,12 +29,56 @@ public:
 
 	}
 
+
+	void try_wrap(auto &f){
+		try{
+			f();
+		}
+		catch (SAException e){
+			void *array[128];
+			size_t size;
+			size = backtrace(array, 128);
+			backtrace_symbols_fd(array, size, STDERR_FILENO);
+
+			std::string errtxt = e.ErrText().GetMultiByteChars();
+			std::cerr << errtxt << std::endl;
+			sleep(5);
+			throw e;
+		}
+	}
+
+	void try_wrap(auto f){
+		try{
+			f();
+		}
+		catch (SAException e){
+			void *array[128];
+			size_t size;
+			size = backtrace(array, 128);
+			backtrace_symbols_fd(array, size, STDERR_FILENO);
+
+			std::string errtxt = e.ErrText().GetMultiByteChars();
+			std::cerr << errtxt << std::endl;
+			sleep(5);
+			throw e;
+		}
+	}
+
 private:
+
 	auto execute(SACommand &cmd){
 		try {
+			int nBulkSize = 1000;
+			SAString sBulkSize;
+			sBulkSize.Format("%d", nBulkSize);
+			cmd.setOption("PreFetchRows") = sBulkSize;
 			cmd.Execute();
 		}
 		catch (SAException e){
+			void *array[128];
+			size_t size;
+			size = backtrace(array, 128);
+			backtrace_symbols_fd(array, size, STDERR_FILENO);
 			std::string errtxt = e.ErrText().GetMultiByteChars();
 			std::cerr << errtxt << std::endl;
 			sleep(5);
@@ -46,19 +90,23 @@ private:
 	void extractReview(Review::builder &rb, Product::builder &pb, Reviewer::builder &rrb, SACommand& cmd, sets& sets){
 
 		assert(cmd.isResultSet());
+		
+		int i = 0;
 
-		SAField &summary = cmd.Field(1);
-		SAField &score = cmd.Field(2);
-		SAField &time = cmd.Field(3);
-		SAField &reviewer = cmd.Field(4);
-		SAField &helpyes = cmd.Field(5);
-		SAField &helptot = cmd.Field(6);
-		SAField &product = cmd.Field(7);
-		SAField &text = cmd.Field(8);
-		SAField &id = cmd.Field(9);
+		std::cout << "result set has this many things in it: " << cmd.RowsAffected() << std::endl;
 
 		std::list<Review::Memo> rml;
 		while (cmd.FetchNext()){
+			++i;
+			SAField &summary = cmd.Field(1);
+			SAField &score = cmd.Field(2);
+			SAField &time = cmd.Field(3);
+			SAField &reviewer = cmd.Field(4);
+			SAField &helpyes = cmd.Field(5);
+			SAField &helptot = cmd.Field(6);
+			SAField &product = cmd.Field(7);
+			SAField &text = cmd.Field(8);
+			SAField &id = cmd.Field(9);
 
 			auto txt = std::string(text.asString().GetMultiByteChars());
 			rml.emplace_back(
@@ -72,6 +120,8 @@ private:
 				product.asLong(),
 				txt);
 		}
+
+		std::cout << "we extracted this many reviews: " << rml.size() << std::endl;
 		
 		getAllProducts(pb, rml, sets, [](auto &rm) {return rm.product.asInt();} );
 		getAllReviewers(rrb, rml, sets, [](auto &rm) {return rm.reviewer.asInt();} );
@@ -83,14 +133,15 @@ private:
 		assert(cmd.isResultSet());
 		
 		
-		SAField &productID = cmd.Field(1);
-		SAField &title = cmd.Field(2);
-		SAField &price = cmd.Field(3);
-		SAField &productType = cmd.Field(4);
-		SAField &real_id = cmd.Field(5);
 
 		std::list<Product::Memo> pml;
 		while (cmd.FetchNext()){
+			SAField &productID = cmd.Field(1);
+			SAField &title = cmd.Field(2);
+			SAField &price = cmd.Field(3);
+			SAField &productType = cmd.Field(4);
+			SAField &real_id = cmd.Field(5);
+
 			pml.emplace_back(
 				real_id.asLong(),
 				productID.asString().GetMultiByteChars(),
@@ -105,12 +156,12 @@ private:
 	void extractReviewer (Reviewer::builder &, SACommand& cmd, sets &sets){
 		assert(cmd.isResultSet());
 
-		SAField &profileName = cmd.Field(1);
-		SAField &userID = cmd.Field(2);
-		SAField &real_id = cmd.Field(3);
-
 		std::list<Reviewer::Memo> rrml;
 		while (cmd.FetchNext()){
+			SAField &profileName = cmd.Field(1);
+			SAField &userID = cmd.Field(2);
+			SAField &real_id = cmd.Field(3);
+			
 			rrml.emplace_back(
 				real_id.asLong(),
 				profileName.asString().GetMultiByteChars(),
@@ -121,27 +172,44 @@ private:
 	}
 
 
-	void getField(std::string initial_cmd, std::string agg_command, SACommand &cmd, auto &rml, 
-				  auto f = [](auto &rm){return rm;}, std::function<void (SACommand&) > setup = [](auto &){}){
+	void getField(std::string initial_cmd, std::function<std::string (int) > agg_command, SACommand &cmd, auto &rml, 
+				  auto f = [](SACommand &cmd, auto &rm){cmd << rm;}, 
+				  std::function<void (SACommand&) > setup = noop_f<SACommand>, 
+				  int end = 1, int start = 2){
+		assert(setup != nullptr);
 		assert(rml.size() > 0);
-		std::stringstream cstr(initial_cmd);
-		for (uint i = 2; i < rml.size() + 1; ++i)
-			cstr << agg_command << i;
+		std::stringstream cstr;
+		cstr << initial_cmd;
+		uint i = start;
+		for (; i < rml.size() + end; ++i)
+			cstr << agg_command(i);
+		assert(i >= rml.size());
 		cmd.setCommandText(cstr.str().c_str());
 		setup(cmd);
-		for (auto &s : rml) cmd << f(s);
+		try {
+			for (auto &s : rml) f(cmd, s);
+		}
+		catch (SAException e){
+			std::cerr << "This was our intended query string: " << cstr.str() << std::endl;
+			std::cerr << "This was our collection size: " << rml.size() << std::endl;
+			try_wrap([&](){throw e;});
+		}
 		execute(cmd);
 	}
 
-	void getAllProducts(Product::builder &pb, auto &rml, sets &sets, auto f = [](auto &rm){return rm;} ){
+	void getAllProducts(Product::builder &pb, auto &rml, sets &sets, auto f = id_f ){
+		assert(rml.size() > 0);
 		SACommand cmd(&con);
-		getField("select * from Product where productref = :1 ", " or productref = :", cmd, rml, f);
+		getField("select * from Product where productref = :1 ", [](int i){ return str_add(" or productref = :",i); }, cmd, rml, 
+				 [&f](auto &cmd, auto&rm){cmd << f(rm);});
 		extractProduct(pb, cmd, sets);
 	}
 
-	void getAllReviewers(Reviewer::builder &rb, auto &rml, sets &sets, auto f = [](auto &rm){return rm;} ){
+	void getAllReviewers(Reviewer::builder &rb, auto &rml, sets &sets, auto f = id_f ){
+		assert(rml.size() > 0);
 		SACommand cmd(&con);
-		getField("select * from Reviewer where id = :1 ", " or id = :", cmd, rml, f);
+		getField("select * from Reviewer where id = :1 ", [](int i) {return str_add(" or id = :", i);}, cmd, rml, 
+				 [&f](auto &cmd, auto&rm){cmd << f(rm);});
 		extractReviewer(rb, cmd, sets);
 	}
 	
@@ -149,25 +217,48 @@ private:
 public:
 
 	void getAllReviews(Review::builder &rb, Product::builder &pb, Reviewer::builder &rrb, 
-					   const auto &textList, sets &sets, auto f = [](auto &s){return s;} ){
+					   const auto &reviewList, sets &sets, auto f = id_f ){
+		assert(reviewList.size() > 0);
 		SACommand cmd(&con);
-		getField("select * from Review where text = :1 ", " or text = :", cmd, textList, [&f](auto &s){return f(s).c_str();});
+		getField("select * from Review where (score = :1 and helpyes = :2 and helptotal = :3 and time = :4 and text = :5)", 
+				 [](int i) {
+					 auto start = i * 5;
+					 std::stringstream ss;
+					 ss <<" or (score = :"<< (1 + start)
+						<<" and helpyes = :"<< (2 + start)
+						<<" and helptotal = :"<< (3 + start)
+						<<" and time = :"<< (4 + start)
+						<<" and text = :"<< (5 + start)
+						<< ") ";
+					 return ss.str();
+				 }, cmd, reviewList, 
+				 [&f](auto &cmd, auto &r) {
+					 cmd << f(r).score
+						 << (long) f(r).help.first
+						 << (long) f(r).help.second
+						 << (long) f(r).time
+						 << f(r).text.get().c_str();
+				 }, noop_f<SACommand>, 0, 1);
 		extractReview(rb, pb, rrb, cmd, sets);
 	}
 
 
-	void getAllReviews(Review::builder &rb, const Reviewer &r, sets &sets, const auto& caviats = {}){
+	void getAllReviews(Review::builder &rb, Product::builder &pb, Reviewer::builder &rrb,
+					   const Reviewer &r, sets &sets, const auto& caviats = {}){
+		assert(r.reviews.size() > 0);
 		SACommand cmd(&con);
-		getField("select * from Review where reviewer = :1", " and not id = :", cmd, r.reviews, 
-				 [](auto &r){return r.id.asInt(); }, [&r](auto &cmd){cmd << r.id.asInt(); });
-		extractReview(rb, cmd, sets);
+		getField("select * from Review where reviewer = :1", [](int i){return str_add(" and not id = :", i);}, cmd, r.reviews, 
+				 [](auto &cmd, auto &r){cmd << r.id.asInt(); }, [&r](auto &cmd){cmd << r.id.asInt(); }, 2);
+		extractReview(rb, pb, rrb, cmd, sets);
 	}
 
-	void getAllReviews(Review::builder &rb, const Product &p, sets &sets) {
+	void getAllReviews(Review::builder &rb, Product::builder &pb, Reviewer::builder &rrb, 
+					   const Product &p, sets &sets) {
+		assert(p.reviews.size() > 0);
 		SACommand cmd(&con); 
-		getField("select * from Review where product = :1", " and not id = :", cmd, p.reviews, 
-			[](auto &r){return r.id.asInt(); }, [&p](auto &cmd){cmd << p.id.asInt(); });
-		extractReview(rb, cmd, sets);
+		getField("select * from Review where product = :1", [](int i){return str_add(" and not id = :", i);}, cmd, p.reviews, 
+				 [](auto &cmd, auto &r){cmd << r.lock()->id.asInt(); }, [&p](auto &cmd){cmd << p.id.asInt(); }, 2);
+		extractReview(rb, pb, rrb, cmd, sets);
 	}
 
 

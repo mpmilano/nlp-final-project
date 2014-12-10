@@ -5,6 +5,7 @@
 #include <boost/interprocess/mapped_region.hpp>
 #include <iostream>
 #include <math.h>
+#include <sstream>
 
 class Review;
 typedef std::weak_ptr<Review> Review_p;
@@ -252,3 +253,16 @@ public:
 	void printFirst() { std::cout << b << std::endl; }
 	virtual ~BeginEndMessage() { std::cout << e << std::endl;}
 };
+
+
+auto id_f(auto &a){ return a;}
+
+void noop_f(auto &){ }
+
+
+std::string str_add(auto &a, auto &b){
+	std::stringstream ss;
+	ss << a;
+	ss << b;
+	return ss.str();
+}

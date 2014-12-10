@@ -16,7 +16,6 @@
 #include "Review_Memo.hpp"
 #include "Review_builder.hpp"
 #include "Helpfulness.hpp"
-#include "ReviewDB.hpp"
 
 
 template<typename T> 
@@ -157,7 +156,7 @@ public:
 	
 private:
 
-	bool readFromFile(const std::string &filename, sets &s) {
+	static bool readFromFile(const std::string &filename, sets &s) {
 		try {
 			std::string cachefile = "/tmp/rc2/" + strReplace(filename,'/','%');
 			mmapStream ms(cachefile);
@@ -175,8 +174,11 @@ private:
 		}
 		catch (...) { return false; }
 	}
-	
-	void writeToFile(const std::string& filename, sets &s) {
+
+
+public:
+
+	static void writeToFile(const std::string& filename, sets &s) {
 	  	std::string cachefile = "/tmp/rc2/" + strReplace(filename,'/','%');
 		std::ofstream ofs(cachefile, std::ios::binary | std::ios_base::out);
 		{
@@ -188,8 +190,13 @@ private:
 		return;
 	}
 	
-	public: 
 
+
+	static bool readFromFile(Review::builder&, Product::builder&, Reviewer::builder&, const std::string &filename, sets &s){
+		return readFromFile(filename, s);
+	}
+
+	/*
 	static void parseAndUpdateCategories(const std::string &filename){
 		mmapStream ms(filename);
 		std::istream &f = ms.s;
@@ -227,7 +234,7 @@ private:
 			}
 			acc.clear();
 		}
-	}
+		} //*/
 
 	static void parse(const std::string &pre, const std::string &post, 
 			  Reviewer::builder &rrb, Product::builder &pb, Review::builder &rb, sets &s ) {

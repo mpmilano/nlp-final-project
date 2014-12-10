@@ -10,8 +10,8 @@ class Reviewer::builder{
 	
 public:
 	builder(const builder&) = delete;
-	builder():idr(0){ assert(b() == nullptr); b() = this; }
-	virtual ~builder() {b() = nullptr; std::cout << "builder done" << std::endl;}
+	builder():idr(0){ assert(b() == nullptr); b() = this; std::cout << "builder made" << std::endl; }
+	virtual ~builder() {b() = nullptr; assert(b() == nullptr); std::cout << "builder done" << std::endl;}
 	
 	Reviewer_pp build(const std::string &profilename, const std::string &userid){
 		if (lookup.find(userid) != lookup.end()) return lookup.at(userid);
