@@ -160,9 +160,9 @@ int main2() {
 
 	} //*/
 
+	std::cout << "kinda serious count: " << q.count_kindaserious(funnytrain.rrs) << std::endl;
 	std::cout << "kinda count: " << q.count_kindafunny(funnytrain.rrs) << std::endl;
 	// 103
-	std::cout << "kinda serious count: " << q.count_kindaserious(funnytrain.rrs) << std::endl;
 
 	
 	//std::cout << m.getProblem() << std::endl;
