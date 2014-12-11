@@ -15,7 +15,6 @@ private:
 	bool built = false;
 
 	void init(){
-		assert(false && "I'm trying to avoid using python for now.");
 		assert(!built);
 		Py_Initialize();
 		nltk_module = PyImport_ImportModule("nltk");

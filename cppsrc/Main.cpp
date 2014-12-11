@@ -16,6 +16,8 @@
 
 using namespace std;
 
+typedef ReviewParser<istream>::sets sets;
+
 void initial_parse(NLTKInstance &nltk, ReviewParser<std::istream>::sets &funny, ReviewParser<std::istream>::sets &normal, const std::string &prefix, const std::string &conf, const std::string &nope){
 	auto &funny_reviews = funny.rs;
 	NLTKInstance::Word_Tokenizer wt(nltk);
@@ -76,13 +78,31 @@ void try_from_db(ReviewParser<istream>::sets &funny, ReviewParser<istream>::sets
 	}
 }
 
+class Questions{
+private:
+	NLTKInstance &nltk;
+	ReviewDB &db;
+	NLTKInstance::Sentence_Tokenizer tok;
+	Review::builder rb;
+	Product::builder pb;
+	Reviewer::builder rrb;
+
+public:
+
+	Questions(NLTKInstance &nltk, ReviewDB &db):nltk(nltk),db(db),tok(nltk),rb(tok){}
+
+	double percent_funny(const Reviewer &r, sets &s){
+		db.getAllReviews(rb,pb,rrb,r,s);
+		return -1;
+	}
+};
 
 int main() {
 
 
-	static const std::string prefix = "/home/milano/course/nlp/data/";
-	static const std::string conf = "-funny-confirmed.txt";
-	static const std::string nope = "-funny-nope.txt";
+	static const std::string prefix = "/home/milano/course/nlp/data/traintest/";
+	static const std::string conf = "-funny.txt";
+	static const std::string nope = "-normal.txt";
 
 
 	ReviewParser<istream>::sets funnytrain;

@@ -17,6 +17,11 @@ public:
 		if (lookup.find(userid) != lookup.end()) return lookup.at(userid);
 		Reviewer_pp p(new Reviewer(++idr,profilename, userid));
 		lookup[userid] = p;
+		rm[p->id] = p;
 		return p;
 	}
+
+	bool interned(smart_int i) const { return rm.find(i) != rm.end();}
+
+	Reviewer_pp build(smart_int i) const { return rm.at(i); }
 };

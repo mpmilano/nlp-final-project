@@ -17,14 +17,25 @@ public:
 		if (lookup.find(productID) != lookup.end()) return lookup.at(productID);
 		Product_pp p( new Product(++idr, productID, title, price, productType));
 		lookup[productID] = p;
+		pm[p->id] = p;
 		return p;
 	}
 	
 	Product_pp build(const std::string &productID){
 		return lookup.at(productID);
 	}
+
+	Product_pp build(smart_int productID){
+		return pm.at(productID);
+	}
+
 	
-	auto interned(const std::string &productID){
+	bool interned(const std::string &productID){
 		return lookup.find(productID) != lookup.end();
 	}
+
+	bool interned(smart_int id){
+		return pm.find(id) != pm.end();
+	}
+
 };

@@ -172,8 +172,10 @@ private:
 	}
 
 
-	void getField(std::string initial_cmd, std::function<std::string (int) > agg_command, SACommand &cmd, auto &rml, 
-				  auto f = [](SACommand &cmd, auto &rm){cmd << rm;}, 
+	template<typename List>
+	void getField(std::string initial_cmd, std::function<std::string (int) > agg_command, SACommand &cmd, List &rml, 
+				  std::function<void (SACommand&, const typename List::value_type&) > f = 
+				  [](SACommand &cmd, const typename List::value_type &rm){cmd << rm;}, 
 				  std::function<void (SACommand&) > setup = noop_f<SACommand>, 
 				  int end = 1, int start = 2){
 		assert(setup != nullptr);
@@ -197,19 +199,39 @@ private:
 		execute(cmd);
 	}
 
-	void getAllProducts(Product::builder &pb, auto &rml, sets &sets, auto f = id_f ){
-		assert(rml.size() > 0);
+	void getAllProducts(Product::builder &pb, auto &rml_i, sets &sets, auto f = id_f ){
+		assert(rml_i.size() > 0);
+
+		std::list<long> rml;
+
+		for (auto &tmp : rml_i){
+			int prod_int = f(tmp);
+			if (pb.interned(prod_int)) sets.ps.insert(pb.build(prod_int));
+			else rml.push_back(prod_int);
+		}
+		
+		if (rml.size() == 0) return;
+
 		SACommand cmd(&con);
-		getField("select * from Product where productref = :1 ", [](int i){ return str_add(" or productref = :",i); }, cmd, rml, 
-				 [&f](auto &cmd, auto&rm){cmd << f(rm);});
+		getField("select * from Product where productref = :1 ", [](int i){ return str_add(" or productref = :",i); }, cmd, rml);
 		extractProduct(pb, cmd, sets);
 	}
 
-	void getAllReviewers(Reviewer::builder &rb, auto &rml, sets &sets, auto f = id_f ){
-		assert(rml.size() > 0);
+	void getAllReviewers(Reviewer::builder &rb, auto &rml_i, sets &sets, auto f = id_f ){
+		assert(rml_i.size() > 0);
+
+		std::list<long> rml;
+		for (auto &tmp : rml_i){
+			int rr_int = f(tmp);
+			if (rb.interned(rr_int)) sets.rrs.insert(rb.build(rr_int));
+			else rml.push_back(rr_int);
+		}
+		
+		if (rml.size() == 0) return;
+		
+
 		SACommand cmd(&con);
-		getField("select * from Reviewer where id = :1 ", [](int i) {return str_add(" or id = :", i);}, cmd, rml, 
-				 [&f](auto &cmd, auto&rm){cmd << f(rm);});
+		getField("select * from Reviewer where id = :1 ", [](int i) {return str_add(" or id = :", i);}, cmd, rml);
 		extractReviewer(rb, cmd, sets);
 	}
 	
@@ -244,11 +266,11 @@ public:
 
 
 	void getAllReviews(Review::builder &rb, Product::builder &pb, Reviewer::builder &rrb,
-					   const Reviewer &r, sets &sets, const auto& caviats = {}){
+					   const Reviewer &r, sets &sets){
 		assert(r.reviews.size() > 0);
 		SACommand cmd(&con);
 		getField("select * from Review where reviewer = :1", [](int i){return str_add(" and not id = :", i);}, cmd, r.reviews, 
-				 [](auto &cmd, auto &r){cmd << r.id.asInt(); }, [&r](auto &cmd){cmd << r.id.asInt(); }, 2);
+				 [](auto &cmd, auto &r){cmd << r.lock()->id.asInt(); }, [&r](auto &cmd){cmd << r.id.asInt(); }, 2);
 		extractReview(rb, pb, rrb, cmd, sets);
 	}
 
