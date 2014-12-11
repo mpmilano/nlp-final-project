@@ -4,49 +4,30 @@
 #include <cmath>
 #include "linear.h"
 #include "tron.h"
+
+enum class humor : int{
+	funny = 1, normal = -1
+		};
+
+struct classification{
+	humor h;
+	double confidence;
+};
+
+
+template<int num_features>
 class ReviewModel{
 
 private:
 
-	static constexpr int num_features = 10;
-
-	static double val_as_double(const FirstVector &v, int pos) {
-		
-		switch(pos){
-		case 0: 
-			return std::sqrt(v.numchars * 1.0);
-		case 1:
-			return v.allpunct;
-		case 2://books
-			return v.category == "Books";
-		case 3://clothing
-			return v.category == "Clothing";
-		case 4://grocery
-			return v.category == "Grocery";
-		case 5://industrial
-			return v.category == "Industrial";
-		case 6://movies
-			return v.category == "Movies";
-		case 7://music
-			return v.category == "Music";
-		case 8://sports
-			return v.category == "Sports";
-		case 9://toys
-			return v.category == "Toys";
-
-		}
-		
-		
-		return v.quotes_word * pos;
-	}
+	std::function<double (const FirstVector &v, int pos)> val_as_double;
 
 	model *trained;
 	SafeMalloc sm;
 	struct problem *prob;
 	struct parameter *params;
 
-	template<int num_features>
-	static void convert(const FirstVector &v, feature_node x[num_features + 1]) {
+	void convert(const FirstVector &v, feature_node x[num_features + 1]) const {
 		for (int j = 0; j < num_features; ++j){
 			feature_node n;
 			n.index = j + 1;
@@ -59,7 +40,7 @@ private:
 		x[num_features] = n;
 	}
 
-	static void build_problem(SafeMalloc &sm, problem &prob, const VecMap1 &vm1_funny, const VecMap1 &vm1_normal){
+	void build_problem(SafeMalloc &sm, problem &prob, const VecMap1 &vm1_funny, const VecMap1 &vm1_normal) const {
 		prob.n = num_features;
 		
 		int total_size = (1 + vm1_funny.size() + vm1_normal.size());
@@ -74,13 +55,13 @@ private:
 			for (auto &fp : vm1_funny){
 				x[i] = &x_elems[i * (prob.n +1)];
 				y[i] = (int) humor::funny;
-				convert<num_features>(fp.second, x[i]);
+				convert(fp.second, x[i]);
 				++i;
 			}
 			for (auto np : vm1_normal){
 				x[i] = &x_elems[i * (prob.n +1)];
 				y[i] = (int) humor::normal;
-				convert<num_features>(np.second, x[i]);
+				convert(np.second, x[i]);
 				++i;
 			}
 		}
@@ -113,19 +94,9 @@ public:
 
 	const problem& getProblem() const { return *prob;}
 
-	enum class humor : int{
-		funny = 1, normal = -1
-	};
-
-	struct classification{
-		humor h;
-		double confidence;
-	};
-
-
 	classification predict(const FirstVector &v) const {
 		feature_node x[num_features + 1];
-		convert<num_features>(v, x);
+		convert(v, x);
 		classification c;
 		c.confidence = ::predict(trained, x);
 		c.h = (c.confidence > 0 ? humor::funny : humor::normal);
@@ -135,8 +106,8 @@ public:
 
 
 	//construct with training set
-	ReviewModel(const VecMap1 &vm1_funny, const VecMap1 &vm1_normal)
-		:trained(nullptr),sm(),prob(sm.malloc<struct problem>(1)),params(sm.malloc<struct parameter>(1)) {
+	ReviewModel(decltype(val_as_double) vad, const VecMap1 &vm1_funny, const VecMap1 &vm1_normal)
+		:val_as_double(vad), trained(nullptr),sm(),prob(sm.malloc<struct problem>(1)),params(sm.malloc<struct parameter>(1)) {
 
 		build_problem(sm, *prob, vm1_funny, vm1_normal);
 
@@ -161,13 +132,13 @@ public:
 
 };
 
-std::ostream& operator<<(std::ostream& os, const ReviewModel::classification& s){
+std::ostream& operator<<(std::ostream& os, const classification& s){
 	std::string h;
 	switch(s.h){
-	case ReviewModel::humor::funny: 
+	case humor::funny: 
 		h = "funny";
 		break;
-	case ReviewModel::humor::normal:
+	case humor::normal:
 		h = "normal";
 		break;
 	}
