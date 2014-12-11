@@ -93,8 +93,6 @@ private:
 		
 		int i = 0;
 
-		std::cout << "result set has this many things in it: " << cmd.RowsAffected() << std::endl;
-
 		std::list<Review::Memo> rml;
 		while (cmd.FetchNext()){
 			++i;
@@ -121,7 +119,8 @@ private:
 				txt);
 		}
 
-		std::cout << "we extracted this many reviews: " << rml.size() << std::endl;
+		//std::cout << "we extracted this many reviews: " << rml.size() << std::endl;
+		if (rml.size() == 0) return;
 		
 		getAllProducts(pb, rml, sets, [](auto &rm) {return rm.product.asInt();} );
 		getAllReviewers(rrb, rml, sets, [](auto &rm) {return rm.reviewer.asInt();} );
@@ -177,7 +176,7 @@ private:
 				  std::function<void (SACommand&, const typename List::value_type&) > f = 
 				  [](SACommand &cmd, const typename List::value_type &rm){cmd << rm;}, 
 				  std::function<void (SACommand&) > setup = noop_f<SACommand>, 
-				  int end = 1, int start = 2){
+				  int end = 1, int start = 2, const std::list<std::string> &caviats = dummy_strs()){
 		assert(setup != nullptr);
 		assert(rml.size() > 0);
 		std::stringstream cstr;
@@ -186,6 +185,7 @@ private:
 		for (; i < rml.size() + end; ++i)
 			cstr << agg_command(i);
 		assert(i >= rml.size());
+		for (auto &s : caviats) cstr << s;
 		cmd.setCommandText(cstr.str().c_str());
 		setup(cmd);
 		try {
@@ -234,7 +234,11 @@ private:
 		getField("select * from Reviewer where id = :1 ", [](int i) {return str_add(" or id = :", i);}, cmd, rml);
 		extractReviewer(rb, cmd, sets);
 	}
-	
+
+	static std::list<std::string> &dummy_strs(){
+		static std::list<std::string> dummy_strs;
+		return dummy_strs;
+	}
 
 public:
 
@@ -264,25 +268,24 @@ public:
 		extractReview(rb, pb, rrb, cmd, sets);
 	}
 
-
-	void getAllReviews(Review::builder &rb, Product::builder &pb, Reviewer::builder &rrb,
-					   const Reviewer &r, sets &sets){
+	template<typename T>
+	typename std::enable_if<std::is_same<T,Reviewer>::value || std::is_same<T,Product>::value>::type
+	getAllReviews(Review::builder &rb, Product::builder &pb, Reviewer::builder &rrb,
+					   const T &r, sets &sets, const std::list<std::string>& caviats = dummy_strs() ){
 		assert(r.reviews.size() > 0);
+		auto pre_size = sets.rs.size();
+		for (auto &r_ : r.reviews) sets.rs.insert(r_.lock());
+		auto post_size = sets.rs.size();
+		assert (pre_size != post_size);
+
 		SACommand cmd(&con);
-		getField("select * from Review where reviewer = :1", [](int i){return str_add(" and not id = :", i);}, cmd, r.reviews, 
-				 [](auto &cmd, auto &r){cmd << r.lock()->id.asInt(); }, [&r](auto &cmd){cmd << r.id.asInt(); }, 2);
+		static std::string command(std::is_same<T,Reviewer>::value ? 
+								   "select * from Review where reviewer = :1" : 
+								   "select * from Review where product = :1");
+		getField(command, [](int i){return str_add(" and not id = :", i);}, cmd, r.reviews, 
+				 [](auto &cmd, auto &r){cmd << r.lock()->id.asInt(); }, [&r](auto &cmd){cmd << r.id.asInt(); }, 2, 2, caviats);
 		extractReview(rb, pb, rrb, cmd, sets);
 	}
-
-	void getAllReviews(Review::builder &rb, Product::builder &pb, Reviewer::builder &rrb, 
-					   const Product &p, sets &sets) {
-		assert(p.reviews.size() > 0);
-		SACommand cmd(&con); 
-		getField("select * from Review where product = :1", [](int i){return str_add(" and not id = :", i);}, cmd, p.reviews, 
-				 [](auto &cmd, auto &r){cmd << r.lock()->id.asInt(); }, [&p](auto &cmd){cmd << p.id.asInt(); }, 2);
-		extractReview(rb, pb, rrb, cmd, sets);
-	}
-
 
 	auto getAllProducts(Product::builder &pb, const Reviewer &r, sets &sets, const auto &caviats = {}){
 		std::string cstr("select productid, title, price, producttype, productref from (select id as rid from Reviewer where id=:1) as T1 left join Review on rid = reviewer left join Product on product = productref");

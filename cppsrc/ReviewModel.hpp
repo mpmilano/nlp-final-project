@@ -27,19 +27,6 @@ private:
 	struct problem *prob;
 	struct parameter *params;
 
-	void convert(const FirstVector &v, feature_node x[num_features + 1]) const {
-		for (int j = 0; j < num_features; ++j){
-			feature_node n;
-			n.index = j + 1;
-			n.value = val_as_double(v, j);
-			x[j] = n;
-		}
-		feature_node n;
-		n.index = -1;
-		n.value = -1;
-		x[num_features] = n;
-	}
-
 	void build_problem(SafeMalloc &sm, problem &prob, const VecMap1 &vm1_funny, const VecMap1 &vm1_normal) const {
 		prob.n = num_features;
 		
@@ -75,6 +62,19 @@ private:
 	}
 
 public:
+
+	void convert(const FirstVector &v, feature_node x[num_features + 1]) const {
+		for (int j = 0; j < num_features; ++j){
+			feature_node n;
+			n.index = j + 1;
+			n.value = val_as_double(v, j);
+			x[j] = n;
+		}
+		feature_node n;
+		n.index = -1;
+		n.value = -1;
+		x[num_features] = n;
+	}
 
 	std::string print_test(std::pair<double, double> test_resuls) {
 		std::stringstream ss;

@@ -96,9 +96,9 @@ public:
 
 	double percent_funny(const Reviewer &r){
 		sets s;
-		db.getAllReviews(rb,pb,rrb,r,s);
-		int funny = 0;
-		int normal = 0;
+		db.getAllReviews(rb,pb,rrb,r,s, {" and not reviewer = 5"} );
+		long long funny = 0;
+		long long normal = 0;
 		auto vecs = populate_vecs(s.rs);
 		auto &vm = *std::get<0>(vecs);
 		for (auto &p : vm){
@@ -112,7 +112,10 @@ public:
 				break;
 			}
 		}
-		return ((double) funny) / (funny + normal);
+
+		assert((normal + funny) != 0);
+		
+		return (normal == 0 ? 1 : ((long double) funny) / (funny + normal));
 	}
 };
 
