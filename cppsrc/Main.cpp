@@ -11,139 +11,16 @@
 #include <unistd.h>
 #include <vector>
 #include "getusage.hpp"
-
 #include "ReviewModel.hpp"
+#include "Questions.hpp"
 
 using namespace std;
 
-typedef ReviewParser<istream>::sets sets;
+int main1() {
 
-template<int features>
-class Questions{
-private:
-	NLTKInstance &nltk;
-	ReviewDB &db;
-	std::unique_ptr<ReviewModel<features> > model;
-	NLTKInstance::Sentence_Tokenizer tok;
-	Review::builder rb;
-	Product::builder pb;
-	Reviewer::builder rrb;
-
-public:
-
-	void parse(ReviewParser<std::istream>::sets &funny, const std::string &prefix, const std::string &conf){
-		ReviewParser<std::istream>::parse(prefix,conf,rrb,pb,rb,funny);
-	}
-
-	void initial_parse(ReviewParser<std::istream>::sets &funny, ReviewParser<std::istream>::sets &normal, const std::string &prefix, const std::string &conf, const std::string &nope){
-		auto &funny_reviews = funny.rs;
-		NLTKInstance::Word_Tokenizer wt(nltk);
-		NLTKInstance::Stemmer stemmer(nltk);
-		{
-			parse(funny, prefix, conf);
-			parse(normal, prefix, nope);
-			std::cout << "parsing done" << std::endl;
-		}
-	}
-	
-	void try_from_db(ReviewParser<istream>::sets &funny, ReviewParser<istream>::sets &normal, 
-					 const std::string &prefix, const std::string &conf, const std::string &nope){
-		{
-			if (! (ReviewParser<istream>::readFromFile(rb,pb,rrb, prefix + conf, funny) 
-				   && ReviewParser<istream>::readFromFile(rb, pb, rrb, prefix + nope, normal)) ) 
-			{
-				{
-					
-					funny.clearAll();
-					normal.clearAll();
-					rb.reset();
-					rrb.reset();
-					pb.reset();
-					ReviewParser<istream>::sets oldfunny;
-					ReviewParser<istream>::sets oldnormal;
-					initial_parse(oldfunny,oldnormal, prefix, conf, nope);
-					Review::builder rb(tok);
-					Product::builder pb;
-					Reviewer::builder rrb;
-					assert(oldfunny.rs.size() > 0);
-					
-					db.getAllReviews(rb, pb, rrb, oldfunny.rs, funny, [](auto &r) -> auto& {return *r; });
-					std::cout << "got funny!" << std::endl;
-					db.getAllReviews(rb, pb, rrb, oldnormal.rs, normal, [](auto &r) -> auto& {return *r; });
-					std::cout << "sizes: newr: " << funny.rs.size() <<  " oldr: " << oldfunny.rs.size() 
-							  << " newp: " << funny.ps.size() << " oldp " << oldfunny.ps.size()
-							  << " newrr: " << funny.rrs.size() <<  " oldrr: " << oldfunny.rrs.size() 
-							  << std::endl;
-					for (auto &r : funny.rs){
-						std::cout << *r << std::endl;
-						break;
-					}
-					
-					ReviewParser<istream>::writeToFile(prefix + conf, funny);
-					ReviewParser<istream>::writeToFile(prefix + nope, normal);				
-				}
-			}
-		}
-	}
-	
-	
-	Questions(NLTKInstance &nltk, ReviewDB &db)
-		:nltk(nltk),db(db),tok(nltk),rb(tok){}
-
-	double overall_funny(auto &rrs){
-		long agg = 0;
-		double aggsum = 0;
-		for (auto &r : rrs){
-			++agg;
-			aggsum += percent_funny(*r);
-		}
-		return aggsum / agg;
-
-	}
-
-	template<typename... Args>
-	void init_model(Args... a){
-		model.reset(new ReviewModel<features>(a...));
-	}
-
-	double percent_funny(const Reviewer &r){
-		assert(model);
-		sets s;
-		db.getAllReviews(rb,pb,rrb,r,s, {" and not reviewer = 5"} );
-		long long funny = 0;
-		long long normal = 0;
-		auto vecs = populate_vecs(s.rs);
-		auto &vm = *std::get<0>(vecs);
-		for (auto &p : vm){
-			auto h = model.predict(p.second).h;
-			switch(h){
-			case humor::funny : 
-				++funny;
-				break;
-			case humor::normal : 
-				++normal;
-				break;
-			}
-		}
-
-		assert((normal + funny) != 0);
-		
-		return (normal == 0 ? 1 : ((long double) funny) / (funny + normal));
-	}
-};
-
-int main() {
-
-	static const std::string prefix = "/home/milano/course/nlp/data/traintest/";
-	static const std::string conf = "-funny.txt";
-	static const std::string nope = "-normal.txt";
-
-
-	ReviewParser<istream>::sets funnytrain;
-	ReviewParser<istream>::sets normaltrain;
 	NLTKInstance nltk;
 	ReviewDB db("AmazonReviewsAllCpp");
-	static constexpr int num_features = 3;
+	static constexpr int num_features = 4;
 	static const auto feature_selector = [](const FirstVector &v, int pos) -> double {
 		switch(pos){
 		case 0: 
@@ -152,6 +29,8 @@ int main() {
 		return std::sqrt(v.numchars * 1.0);
 		case 2:
 		return v.allpunct;
+		case 3:
+		return v.review.product->id.asInt();
 		default:
 		assert(false);
 		}
@@ -159,63 +38,58 @@ int main() {
 	};
 
 	Questions<3> q(nltk,db);
-	q.try_from_db(funnytrain,normaltrain,prefix,str_add("first",conf), str_add("first",nope));
-
+	
+	/*
 	{
+		static const std::string prefix = "/home/milano/course/nlp/data/traintest/";
+		static const std::string conf = "-funny.txt";
+		static const std::string nope = "-normal.txt";
+		ReviewParser<istream>::sets funnytrain;
+		ReviewParser<istream>::sets normaltrain;
+
+		q.initial_parse(funnytrain,normaltrain,prefix,str_add("first",conf), str_add("first",nope));
 		auto fvs = populate_vecs(funnytrain.rs);
 		auto nvs = populate_vecs(normaltrain.rs);
 
 		ReviewModel<num_features> m1(feature_selector, *std::get<0>(fvs), *std::get<0>(nvs), true );
 		std::ofstream out("/tmp/training-vector");
 		out << m1.getProblem();
-	}
+	} //*/
 
 	{
 		sets industrial;
-		q.parse(industrial, "/home/milano/course/nlp/data/","Industrial_&_Scientific.txt" );
+		q.parse(industrial, "/home/milano/course/nlp/data/","Clothing" );
 		auto ivs = populate_vecs(industrial.rs);
 		
-		ReviewModel<num_features> m2(feature_selector, *std::get<0>(ivs), *std::get<0>(ivs), true );
-		std::ofstream out("/tmp/industrial-vector");
-		out << m2.getProblem();	
+		VecMap1 empty;
+
+		ReviewModel<num_features> m2(feature_selector, *std::get<0>(ivs), empty, true );
+		std::ofstream out("/tmp/clothing-vector.txt");
+		out << fixed;
+		out << m2.getProblem();
+		{
+			std::ofstream rrmap("/tmp/clothing-reviewerid-userid.txt");
+			for (auto &rr : industrial.rrs) rrmap << rr->id.asInt() << " " << rr->userID << " " << rr->profileName << std::endl;
+		}
+		{
+			std::ofstream pmap("/tmp/clothing-proecut-userid.txt");
+			for (auto &p : industrial.ps) pmap << p->id.asInt() << " " << p->productID << " " << p->title << std::endl;
+		}
 	}
+
+	return 0;
 
 }
 
-/*
+
 int main2() {
 
 
 	static const std::string prefix = "/home/milano/course/nlp/data/traintest/";
 	static const std::string conf = "-funny.txt";
 	static const std::string nope = "-normal.txt";
-
-
-	ReviewParser<istream>::sets funnytrain;
-	ReviewParser<istream>::sets normaltrain;
-	ReviewParser<istream>::sets funnytest;
-	ReviewParser<istream>::sets normaltest;
-	NLTKInstance nltk;
-	ReviewDB db("AmazonReviewsAllCpp");
-	try_from_db(funnytrain,normaltrain,nltk,db,prefix,str_add("first",conf), str_add("first",nope));
-	try_from_db(funnytest,normaltest,nltk,db,prefix,str_add("second",conf), str_add("second",nope));
-
-	auto funny_train_vecs = populate_vecs(funnytrain.rs);
-	auto normal_train_vecs = populate_vecs(normaltrain.rs);
-
-	auto funny_test_vecs = populate_vecs(funnytest.rs);
-	auto normal_test_vecs = populate_vecs(normaltest.rs);
-
-
-	auto &vm1 = *std::get<0>(funny_train_vecs);
-	auto &vm2 = *std::get<0>(normal_train_vecs);
-
-	auto &vm1_t = *std::get<0>(funny_test_vecs);
-	auto &vm2_t = *std::get<0>(normal_test_vecs);
-
-	std::cout << "Vectors assembled" << std::endl;
-
-	ReviewModel<10> m([](const FirstVector &v, int pos) -> double{
+	static constexpr int features = 10;
+	auto model_fun = [](const FirstVector &v, int pos) -> double{
 			switch(pos){
 			case 0: 
 				return std::sqrt(v.numchars * 1.0);
@@ -240,15 +114,59 @@ int main2() {
 			default: 
 				assert(false);
 				return -1;
-			}},
-		vm1, vm2);
-	std::cout << "Model trained" << std::endl;
-	std::cout << "Model testing: " << m.print_test(m.test(vm1_t, vm2_t)) << std::endl;
-	Questions<10> q(nltk,db,m);
+			}};
+
+	NLTKInstance nltk;
+	ReviewDB db("AmazonReviewsAllCpp");
+
+	Questions<features> q(nltk,db);
+
+	ReviewParser<istream>::sets funnytrain;
+	ReviewParser<istream>::sets normaltrain;
+	ReviewParser<istream>::sets funnytest;
+	ReviewParser<istream>::sets normaltest;
+
+	q.try_from_db(funnytrain,normaltrain,prefix,str_add("first",conf), str_add("first",nope));
+	q.try_from_db(funnytest,normaltest,prefix,str_add("second",conf), str_add("second",nope));
+
+	auto funny_train_vecs = populate_vecs(funnytrain.rs);
+	auto normal_train_vecs = populate_vecs(normaltrain.rs);
+
+	auto funny_test_vecs = populate_vecs(funnytest.rs);
+	auto normal_test_vecs = populate_vecs(normaltest.rs);
+
+
+	auto &vm1 = *std::get<0>(funny_train_vecs);
+	auto &vm2 = *std::get<0>(normal_train_vecs);
+
+	auto &vm1_t = *std::get<0>(funny_test_vecs);
+	auto &vm2_t = *std::get<0>(normal_test_vecs);
+
+	std::cout << "Vectors assembled" << std::endl;
 	
-	std::cout << "overall funny for funny training: " << q.overall_funny(funnytrain.rrs) << std::endl;
-	std::cout << "overall funny for normal training: " << q.overall_funny(normaltrain.rrs) << std::endl;
+	q.init_model(model_fun, vm1, vm2);
+	
+	//std::cout << "overall funny for funny training: " << q.overall_funny(funnytrain.rrs) << std::endl;
+	//std::cout << "overall funny for normal training: " << q.overall_funny(normaltrain.rrs) << std::endl;
+	{
+		auto p = q.funniest_reviewer(5, funnytrain.rrs);
+		std::cout << "Funniest (>5) reviewer has " << p.first << " reviews, " << p.second * 100 << "% of which are funny." <<std::endl;
+	}
+
+	/*
+	{
+		auto p = q.prolific_funny(funnytrain.rrs);
+		std::cout << "prolific funny " << p << std::endl;
+
+	} //*/
+
+	std::cout << "kinda count: " << q.count_kindafunny(funnytrain.rrs) << std::endl;
+	// 103
+	std::cout << "kinda serious count: " << q.count_kindaserious(funnytrain.rrs) << std::endl;
+
 	
 	//std::cout << m.getProblem() << std::endl;
 	return 0;
-	} //*/
+} //*/
+
+int main() { return main2(); }
