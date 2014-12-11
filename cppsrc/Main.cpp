@@ -82,6 +82,7 @@ class Questions{
 private:
 	NLTKInstance &nltk;
 	ReviewDB &db;
+	ReviewModel &model;
 	NLTKInstance::Sentence_Tokenizer tok;
 	Review::builder rb;
 	Product::builder pb;
@@ -89,11 +90,28 @@ private:
 
 public:
 
-	Questions(NLTKInstance &nltk, ReviewDB &db):nltk(nltk),db(db),tok(nltk),rb(tok){}
+	Questions(NLTKInstance &nltk, ReviewDB &db, ReviewModel &model)
+		:nltk(nltk),db(db),model(model),tok(nltk),rb(tok){}
 
-	double percent_funny(const Reviewer &r, sets &s){
+	double percent_funny(const Reviewer &r){
+		sets s;
 		db.getAllReviews(rb,pb,rrb,r,s);
-		return -1;
+		int funny = 0;
+		int normal = 0;
+		auto vecs = populate_vecs(s.rs);
+		auto &vm = *std::get<0>(vecs);
+		for (auto &p : vm){
+			auto h = model.predict(p.second).h;
+			switch(h){
+			case ReviewModel::humor::funny : 
+				++funny;
+				break;
+			case ReviewModel::humor::normal : 
+				++normal;
+				break;
+			}
+		}
+		return ((double) funny) / (funny + normal);
 	}
 };
 
@@ -132,7 +150,10 @@ int main() {
 	ReviewModel m(vm1, vm2);
 	std::cout << "Model trained" << std::endl;
 	std::cout << "Model testing: " << m.print_test(m.test(vm1_t, vm2_t)) << std::endl;
-
+	Questions q(nltk,db,m);
+	for (auto rr : funnytest.rrs) 
+		std::cout << rr->profileName << ": " << q.percent_funny(*rr) << std::endl;
+	
 	//std::cout << m.getProblem() << std::endl;
 	
 }
