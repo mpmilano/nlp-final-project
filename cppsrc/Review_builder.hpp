@@ -14,7 +14,10 @@ public:
 		:idr(0),tok(tok){ assert(b() == nullptr); b() = this; }
 	builder(const builder&) = delete;
 	virtual ~builder() {b() = nullptr; std::cout << "builder done" << std::endl;}
-	
+
+	void reset(){
+		idr = 0;
+	}
 
 	Review_pp build(smart_int id, 
 					const strt &summary,

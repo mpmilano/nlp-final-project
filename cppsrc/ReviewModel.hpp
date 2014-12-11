@@ -106,7 +106,7 @@ public:
 
 
 	//construct with training set
-	ReviewModel(decltype(val_as_double) vad, const VecMap1 &vm1_funny, const VecMap1 &vm1_normal)
+	ReviewModel(decltype(val_as_double) vad, const VecMap1 &vm1_funny, const VecMap1 &vm1_normal, bool skip_training = false)
 		:val_as_double(vad), trained(nullptr),sm(),prob(sm.malloc<struct problem>(1)),params(sm.malloc<struct parameter>(1)) {
 
 		build_problem(sm, *prob, vm1_funny, vm1_normal);
@@ -126,11 +126,14 @@ public:
 			assert(!check_parameter(prob, params));
 		}
 	
-		trained = train(prob, params);
+		if (!skip_training) trained = train(prob, params);
 	}
 
+	void retrain(){ trained = train(prob, params); }
 
 };
+
+
 
 std::ostream& operator<<(std::ostream& os, const classification& s){
 	std::string h;

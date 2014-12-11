@@ -8,6 +8,12 @@ class Product::builder {
 	smart_int idr;
 	std::unordered_map<smart_int, Product_pp> pm;
 public:
+
+	void reset(){
+		idr = 0;
+		lookup.clear();
+		pm.clear();
+	}
 	
 	builder(const builder&) = delete;
 	builder():idr(0){ assert(b() == nullptr); b() = this; }
